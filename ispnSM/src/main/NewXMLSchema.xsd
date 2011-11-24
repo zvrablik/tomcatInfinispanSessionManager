@@ -1,0 +1,583 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" version="1.0" targetNamespace="urn:infinispan:config:5.0" xmlns:tns="urn:infinispan:config:5.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:element name="globalConfiguration" type="tns:globalConfiguration"/>
+
+  <xs:element name="infinispan" type="tns:infinispanConfiguration"/>
+
+  <xs:element name="namedCacheConfiguration" type="tns:configuration"/>
+
+  <xs:complexType name="infinispanConfiguration">
+    <xs:sequence>
+      <xs:element name="global" type="tns:globalConfiguration" minOccurs="0"/>
+      <xs:element name="default" type="tns:configuration" minOccurs="0"/>
+      <xs:element name="namedCache" type="tns:configuration" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="globalConfiguration">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractConfigurationBean">
+        <xs:all>
+          <xs:element name="asyncListenerExecutor" type="tns:executorFactoryType" minOccurs="0"/>
+          <xs:element name="asyncTransportExecutor" type="tns:executorFactoryType" minOccurs="0"/>
+          <xs:element name="evictionScheduledExecutor" type="tns:scheduledExecutorFactoryType" minOccurs="0"/>
+          <xs:element name="replicationQueueScheduledExecutor" type="tns:scheduledExecutorFactoryType" minOccurs="0"/>
+          <xs:element name="globalJmxStatistics" type="tns:globalJmxStatisticsType" minOccurs="0"/>
+          <xs:element name="transport" type="tns:transportType" minOccurs="0"/>
+          <xs:element name="serialization" type="tns:serializationType" minOccurs="0"/>
+          <xs:element name="shutdown" type="tns:shutdownType" minOccurs="0"/>
+        </xs:all>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="abstractConfigurationBean" abstract="true">
+    <xs:sequence/>
+  </xs:complexType>
+
+  <xs:complexType name="executorFactoryType">
+    <xs:complexContent>
+      <xs:extension base="tns:factoryClassWithPropertiesType">
+        <xs:sequence/>
+        <xs:attribute name="factory" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="factoryClassWithPropertiesType" abstract="true">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractConfigurationBeanWithGCR">
+        <xs:sequence>
+          <xs:element name="properties" type="tns:propertiesType" minOccurs="0"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="abstractConfigurationBeanWithGCR" abstract="true">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractConfigurationBean">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="propertiesType">
+    <xs:sequence>
+      <xs:element name="property" type="tns:property" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="property">
+    <xs:sequence/>
+    <xs:attribute name="name" type="xs:string"/>
+    <xs:attribute name="value" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="scheduledExecutorFactoryType">
+    <xs:complexContent>
+      <xs:extension base="tns:factoryClassWithPropertiesType">
+        <xs:sequence/>
+        <xs:attribute name="factory" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="globalJmxStatisticsType">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractConfigurationBeanWithGCR">
+        <xs:sequence>
+          <xs:element name="properties" type="tns:propertiesType" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="allowDuplicateDomains" type="xs:boolean"/>
+        <xs:attribute name="cacheManagerName" type="xs:string"/>
+        <xs:attribute name="enabled" type="xs:boolean"/>
+        <xs:attribute name="jmxDomain" type="xs:string"/>
+        <xs:attribute name="mBeanServerLookup" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="transportType">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractConfigurationBeanWithGCR">
+        <xs:sequence>
+          <xs:element name="properties" type="tns:propertiesType" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="clusterName" type="xs:string"/>
+        <xs:attribute name="distributedSyncTimeout" type="xs:long"/>
+        <xs:attribute name="machineId" type="xs:string"/>
+        <xs:attribute name="nodeName" type="xs:string"/>
+        <xs:attribute name="rackId" type="xs:string"/>
+        <xs:attribute name="siteId" type="xs:string"/>
+        <xs:attribute name="strictPeerToPeer" type="xs:boolean"/>
+        <xs:attribute name="transportClass" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="serializationType">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractConfigurationBeanWithGCR">
+        <xs:sequence>
+          <xs:element name="advancedExternalizers" type="tns:advancedExternalizersType" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="marshallerClass" type="xs:string"/>
+        <xs:attribute name="version" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="advancedExternalizersType">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractConfigurationBeanWithGCR">
+        <xs:sequence>
+          <xs:element name="advancedExternalizer" type="tns:advancedExternalizerConfig" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="advancedExternalizerConfig">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractConfigurationBeanWithGCR">
+        <xs:sequence/>
+        <xs:attribute name="externalizerClass" type="xs:string"/>
+        <xs:attribute name="id" type="xs:int"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="shutdownType">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractConfigurationBeanWithGCR">
+        <xs:sequence/>
+        <xs:attribute name="hookBehavior" type="tns:shutdownHookBehavior"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="configuration">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractNamedCacheConfigurationBean">
+        <xs:all>
+          <xs:element name="locking" type="tns:lockingType" minOccurs="0"/>
+          <xs:element name="loaders" type="tns:cacheLoaderManagerConfig" minOccurs="0"/>
+          <xs:element name="transaction" type="tns:transactionType" minOccurs="0"/>
+          <xs:element name="customInterceptors" type="tns:customInterceptorsType" minOccurs="0"/>
+          <xs:element name="dataContainer" type="tns:dataContainerType" minOccurs="0"/>
+          <xs:element name="eviction" type="tns:evictionType" minOccurs="0"/>
+          <xs:element name="expiration" type="tns:expirationType" minOccurs="0"/>
+          <xs:element name="unsafe" type="tns:unsafeType" minOccurs="0"/>
+          <xs:element name="clustering" type="tns:clusteringType" minOccurs="0"/>
+          <xs:element name="jmxStatistics" type="tns:jmxStatistics" minOccurs="0"/>
+          <xs:element name="storeAsBinary" type="tns:storeAsBinary" minOccurs="0"/>
+          <xs:element name="lazyDeserialization" type="tns:lazyDeserialization" minOccurs="0"/>
+          <xs:element name="invocationBatching" type="tns:invocationBatching" minOccurs="0"/>
+          <xs:element name="deadlockDetection" type="tns:deadlockDetectionType" minOccurs="0"/>
+          <xs:element name="indexing" type="tns:queryConfigurationBean" minOccurs="0"/>
+        </xs:all>
+        <xs:attribute name="name" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="abstractNamedCacheConfigurationBean" abstract="true">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractConfigurationBean">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="lockingType">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractFluentConfigurationBean">
+        <xs:sequence/>
+        <xs:attribute name="concurrencyLevel" type="xs:int"/>
+        <xs:attribute name="isolationLevel" type="tns:isolationLevel"/>
+        <xs:attribute name="lockAcquisitionTimeout" type="xs:long"/>
+        <xs:attribute name="useLockStriping" type="xs:boolean"/>
+        <xs:attribute name="writeSkewCheck" type="xs:boolean"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="abstractFluentConfigurationBean" abstract="true">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractNamedCacheConfigurationBean">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="cacheLoaderManagerConfig">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractFluentConfigurationBean">
+        <xs:sequence>
+          <xs:element name="loader" type="tns:abstractCacheStoreConfig" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="passivation" type="xs:boolean"/>
+        <xs:attribute name="preload" type="xs:boolean"/>
+        <xs:attribute name="shared" type="xs:boolean"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="abstractCacheStoreConfig">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractCacheLoaderConfig">
+        <xs:all>
+          <xs:element name="async" type="tns:asyncStoreConfig" minOccurs="0"/>
+          <xs:element name="singletonStore" type="tns:singletonStoreConfig" minOccurs="0"/>
+          <xs:element name="properties" type="tns:propertiesType" minOccurs="0"/>
+        </xs:all>
+        <xs:attribute name="fetchPersistentState" type="xs:boolean"/>
+        <xs:attribute name="ignoreModifications" type="xs:boolean"/>
+        <xs:attribute name="purgeOnStartup" type="xs:boolean"/>
+        <xs:attribute name="purgeSynchronously" type="xs:boolean"/>
+        <xs:attribute name="purgerThreads" type="xs:int"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="abstractCacheLoaderConfig">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractNamedCacheConfigurationBean">
+        <xs:sequence/>
+        <xs:attribute name="class" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="asyncStoreConfig">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractDecoratorConfigurationBean">
+        <xs:sequence/>
+        <xs:attribute name="enabled" type="xs:boolean"/>
+        <xs:attribute name="flushLockTimeout" type="xs:long"/>
+        <xs:attribute name="shutdownTimeout" type="xs:long"/>
+        <xs:attribute name="threadPoolSize" type="xs:int"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="abstractDecoratorConfigurationBean" abstract="true">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractNamedCacheConfigurationBean">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="singletonStoreConfig">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractDecoratorConfigurationBean">
+        <xs:sequence/>
+        <xs:attribute name="pushStateTimeout" type="xs:long"/>
+        <xs:attribute name="pushStateWhenCoordinator" type="xs:boolean"/>
+        <xs:attribute name="enabled" type="xs:boolean"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="transactionType">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractFluentConfigurationBean">
+        <xs:sequence>
+          <xs:element name="recovery" type="tns:recoveryType" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="cacheStopTimeout" type="xs:int"/>
+        <xs:attribute name="eagerLockSingleNode" type="xs:boolean"/>
+        <xs:attribute name="syncCommitPhase" type="xs:boolean"/>
+        <xs:attribute name="syncRollbackPhase" type="xs:boolean"/>
+        <xs:attribute name="transactionManagerLookupClass" type="xs:string"/>
+        <xs:attribute name="useEagerLocking" type="xs:boolean"/>
+        <xs:attribute name="useSynchronization" type="xs:boolean"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="recoveryType">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractFluentConfigurationBean">
+        <xs:sequence/>
+        <xs:attribute name="enabled" type="xs:boolean" use="required"/>
+        <xs:attribute name="recoveryInfoCacheName" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="customInterceptorsType">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractFluentConfigurationBean">
+        <xs:sequence>
+          <xs:element name="interceptor" type="tns:interceptor" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="interceptor">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractNamedCacheConfigurationBean">
+        <xs:sequence>
+          <xs:element name="properties" type="tns:propertiesType" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="after" type="xs:string"/>
+        <xs:attribute name="before" type="xs:string"/>
+        <xs:attribute name="class" type="xs:string"/>
+        <xs:attribute name="index" type="xs:int"/>
+        <xs:attribute name="position" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="dataContainerType">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractFluentConfigurationBean">
+        <xs:sequence>
+          <xs:element name="properties" type="tns:propertiesType" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="class" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="evictionType">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractFluentConfigurationBean">
+        <xs:sequence/>
+        <xs:attribute name="maxEntries" type="xs:int"/>
+        <xs:attribute name="strategy" type="tns:evictionStrategy"/>
+        <xs:attribute name="threadPolicy" type="tns:evictionThreadPolicy"/>
+        <xs:attribute name="wakeUpInterval" type="xs:long"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="expirationType">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractFluentConfigurationBean">
+        <xs:sequence/>
+        <xs:attribute name="wakeUpInterval" type="xs:long"/>
+        <xs:attribute name="lifespan" type="xs:long"/>
+        <xs:attribute name="maxIdle" type="xs:long"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="unsafeType">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractFluentConfigurationBean">
+        <xs:sequence/>
+        <xs:attribute name="unreliableReturnValues" type="xs:boolean"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="clusteringType">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractFluentConfigurationBean">
+        <xs:all>
+          <xs:element name="sync" type="tns:syncType" minOccurs="0"/>
+          <xs:element name="stateRetrieval" type="tns:stateRetrievalType" minOccurs="0"/>
+          <xs:element name="l1" type="tns:l1Type" minOccurs="0"/>
+          <xs:element name="async" type="tns:asyncType" minOccurs="0"/>
+          <xs:element name="hash" type="tns:hashType" minOccurs="0"/>
+        </xs:all>
+        <xs:attribute name="mode" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="syncType">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractFluentConfigurationBean">
+        <xs:sequence/>
+        <xs:attribute name="replTimeout" type="xs:long"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="stateRetrievalType">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractFluentConfigurationBean">
+        <xs:sequence/>
+        <xs:attribute name="alwaysProvideInMemoryState" type="xs:boolean"/>
+        <xs:attribute name="fetchInMemoryState" type="xs:boolean"/>
+        <xs:attribute name="initialRetryWaitTime" type="xs:long"/>
+        <xs:attribute name="logFlushTimeout" type="xs:long"/>
+        <xs:attribute name="maxNonProgressingLogWrites" type="xs:int"/>
+        <xs:attribute name="numRetries" type="xs:int"/>
+        <xs:attribute name="retryWaitTimeIncreaseFactor" type="xs:int"/>
+        <xs:attribute name="timeout" type="xs:long"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="l1Type">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractFluentConfigurationBean">
+        <xs:sequence/>
+        <xs:attribute name="enabled" type="xs:boolean"/>
+        <xs:attribute name="invalidationThreshold" type="xs:int"/>
+        <xs:attribute name="lifespan" type="xs:long"/>
+        <xs:attribute name="onRehash" type="xs:boolean"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="asyncType">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractFluentConfigurationBean">
+        <xs:sequence/>
+        <xs:attribute name="asyncMarshalling" type="xs:boolean"/>
+        <xs:attribute name="replQueueClass" type="xs:string"/>
+        <xs:attribute name="replQueueInterval" type="xs:long"/>
+        <xs:attribute name="replQueueMaxElements" type="xs:int"/>
+        <xs:attribute name="useReplQueue" type="xs:boolean"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="hashType">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractFluentConfigurationBean">
+        <xs:sequence>
+          <xs:element name="groups" type="tns:groupsConfiguration" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="class" type="xs:string"/>
+        <xs:attribute name="hashFunctionClass" type="xs:string"/>
+        <xs:attribute name="numOwners" type="xs:int"/>
+        <xs:attribute name="numVirtualNodes" type="xs:int"/>
+        <xs:attribute name="rehashEnabled" type="xs:boolean"/>
+        <xs:attribute name="rehashRpcTimeout" type="xs:long"/>
+        <xs:attribute name="rehashWait" type="xs:long"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="groupsConfiguration">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractFluentConfigurationBean">
+        <xs:sequence>
+          <xs:element name="grouper" type="tns:grouperConfiguration" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="enabled" type="xs:boolean"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="grouperConfiguration">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractNamedCacheConfigurationBean">
+        <xs:sequence/>
+        <xs:attribute name="class" type="xs:string"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="jmxStatistics">
+    <xs:complexContent>
+      <xs:extension base="tns:booleanAttributeType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="booleanAttributeType">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractFluentConfigurationBean">
+        <xs:sequence/>
+        <xs:attribute name="enabled" type="xs:boolean"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="storeAsBinary">
+    <xs:complexContent>
+      <xs:extension base="tns:booleanAttributeType">
+        <xs:sequence/>
+        <xs:attribute name="storeKeysAsBinary" type="xs:boolean"/>
+        <xs:attribute name="storeValuesAsBinary" type="xs:boolean"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="lazyDeserialization">
+    <xs:complexContent>
+      <xs:extension base="tns:booleanAttributeType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="invocationBatching">
+    <xs:complexContent>
+      <xs:extension base="tns:booleanAttributeType">
+        <xs:sequence/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="deadlockDetectionType">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractFluentConfigurationBean">
+        <xs:sequence/>
+        <xs:attribute name="enabled" type="xs:boolean"/>
+        <xs:attribute name="spinDuration" type="xs:long"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="queryConfigurationBean">
+    <xs:complexContent>
+      <xs:extension base="tns:abstractFluentConfigurationBean">
+        <xs:sequence>
+          <xs:element name="properties" type="tns:propertiesType" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="enabled" type="xs:boolean"/>
+        <xs:attribute name="indexLocalOnly" type="xs:boolean"/>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:simpleType name="shutdownHookBehavior">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="DEFAULT"/>
+      <xs:enumeration value="REGISTER"/>
+      <xs:enumeration value="DONT_REGISTER"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="isolationLevel">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="NONE"/>
+      <xs:enumeration value="SERIALIZABLE"/>
+      <xs:enumeration value="REPEATABLE_READ"/>
+      <xs:enumeration value="READ_COMMITTED"/>
+      <xs:enumeration value="READ_UNCOMMITTED"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="evictionStrategy">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="NONE"/>
+      <xs:enumeration value="UNORDERED"/>
+      <xs:enumeration value="FIFO"/>
+      <xs:enumeration value="LRU"/>
+      <xs:enumeration value="LRU_OLD"/>
+      <xs:enumeration value="LIRS"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="evictionThreadPolicy">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="PIGGYBACK"/>
+      <xs:enumeration value="DEFAULT"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>
+

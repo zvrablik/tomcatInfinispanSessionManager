@@ -1,0 +1,43 @@
+Distirbuted session manager
+
+events
+* currently just local events
+* broadcast remove session to all cluster nodes
+
+session metadata clustering
+* separated new cache for session metadata - session activity must be distributed too
+* values to cluster
+		maxInactive - to know when recycle
+		createdTime
+		lastAccesssedTime - to remove session after inactivity must be shared
+
+* thisAccessed is local only - to see when was last time accessed from current tomcat instance
+
+reset session - change session id
+
+
+design
+- see only local sessions -- no need to get all sessions
+
+
+? distributed transactions ? - need latest Bitronix or any other XATransaction manager - is this necessary?
+
+create new session object
+ 1. completely new - create new local session object and infinispan cache entry
+ 2. new in this node
+      how to recognize I have created that session -- completely new -- there is not session entry in infinispan cache
+3. generate unique name - ensure that cluster doesn't contain
+
+? questions ?
+ * do I have to synchronize over all nodes when created new session attributes entry in infinispan?
+ * do I have to use distributed transactions? - currently used fine grained AtomicMap to update session items independently
+
+
+recovery on node failure
+  TODO - valve to detect that jvmRoute is not same as local jvmRoute and will perform sessionId name change
+       - this valve is necessary only if sticky session is used
+
+classloading issue
+*  is it possible to use one CacheManager in multiple classloaders?
+     * I have created decorated cache classes and updated named cache configuration to use correct classloader, 
+       but during replicating state infinispan throws exception class not found, only classes visible to CacheManager classloader are visible.

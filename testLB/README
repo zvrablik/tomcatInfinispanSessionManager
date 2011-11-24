@@ -1,0 +1,12 @@
+test application to verify functionality of infinispan distributed tomcat cache manager
+
+functionality:
+* track requests and store which node was used during request
+  - to test non-sticky sessions
+  - to test recovery sessions
+
+request logs contains timestamp, host ( clusterNode) name and ip address and remote host(browser) ip address and host if available
+
+* add new value to session
+* remove value from session
+* invalidate session

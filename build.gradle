@@ -1,0 +1,23 @@
+subprojects {
+    group = 'org.vrablik.tc.ispn'
+    version = 'prototype'
+
+    apply plugin: 'java'
+    apply plugin: 'eclipse'
+    apply plugin: 'idea'
+    apply plugin: 'maven'
+
+    configurations {
+    }
+
+    repositories {
+        //   flatDir(dirs: "$projectDir/lib")
+        mavenRepo(urls: "https://repository.jboss.org/nexus/content/groups/public/")
+        mavenCentral()
+    }
+
+    jar.enabled = true
+	
+    infinispanVersion = '5.1.0.BETA5'
+    tomcatVersion = '6.0.29'
+}

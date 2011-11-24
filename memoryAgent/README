@@ -1,0 +1,4 @@
+it is useful to know size of session object in memory
+
+TODO
+create JMX functionality to call getSize with parameter sessionId output size of all session attributes

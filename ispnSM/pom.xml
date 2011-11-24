@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	
+	<groupId>org.apache.tomcat</groupId>
+	<artifactId>ispnSM</artifactId>
+	<version>prototype</version>
+	<name>Infinispan Session Manager</name>
+	<description>distributed session using Infinispan.</description>
+	
+	<packaging>jar</packaging>
+	
+	<properties>
+	  <version.tomcat>6.0.29</version.tomcat>
+	  <version.ispn>5.1.0.BETA5</version.ispn>
+	</properties>
+	
+
+	<dependencies>
+		<dependency>
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>catalina</artifactId>
+			<version>${version.tomcat}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>coyote</artifactId>
+			<version>${version.tomcat}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>juli</artifactId>
+			<version>${version.tomcat}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.infinispan</groupId>
+			<artifactId>infinispan-core</artifactId>
+			<version>${version.ispn}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.testng</groupId>
+			<artifactId>testng</artifactId>
+			<version>6.2.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.googlecode.jmockit</groupId>
+			<artifactId>jmockit</artifactId>
+			<version>0.999.11</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+	    <plugins>
+		<plugin>
+		   <artifactId>maven-surefire-plugin</artifactId>
+		   <configuration>
+		      <argLine>
+		         -javaagent:"${settings.localRepository}"/com/googlecode/jmockit/jmockit/0.999.11/jmockit-0.999.11.jar
+		      </argLine>
+		   </configuration>
+		</plugin>
+	    </plugins>
+	</build>
+
+<repositories>
+        <repository>
+            <id>jboss.org</id>
+            <url>http://repository.jboss.org/nexus/content/groups/public</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+</repositories>
+
+</project>
