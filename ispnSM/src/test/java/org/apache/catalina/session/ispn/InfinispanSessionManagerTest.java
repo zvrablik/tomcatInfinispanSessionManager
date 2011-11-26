@@ -95,4 +95,24 @@ public class InfinispanSessionManagerTest {
         String newSessionId = ispnSM.stripJvmRoute(sessionId);
         AssertJUnit.assertEquals("testtest", newSessionId);
     }
+    
+    /**
+     * strip valid session with jvmRoute suffix - could be any suffix separated by dot
+     *
+     */
+    @Test
+    public void testStripJvmRoute3() {
+        final InfinispanSessionManager ispnSM = new InfinispanSessionManager();
+        
+        new Expectations() {
+            {   
+            }
+        };
+        
+        ispnSM.setContainer(engine);
+        
+        String sessionId = "testtest1.bla";
+        String newSessionId = ispnSM.stripDotSuffix(sessionId);
+        AssertJUnit.assertEquals("testtest1", newSessionId);
+    }
 }
