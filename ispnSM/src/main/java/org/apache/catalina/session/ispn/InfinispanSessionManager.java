@@ -5,6 +5,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.catalina.Container;
@@ -19,6 +20,11 @@ import org.infinispan.DecoratedCache;
 import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.config.Configuration;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
+import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 
 /**
  * Infinispan session manager.
@@ -74,9 +80,14 @@ public class InfinispanSessionManager
     /**
      * distributed session cache
      */
-    Cache<String, Object> attributesCache;
+    private Cache<String, Object> attributesCache;
     
-    Map<String, Session> localSessions = new ConcurrentHashMap<String, Session>();
+    /**
+     * Local sessions
+     * to prevent create new object per request
+     * session is removed through listener when any node removes session.
+     */
+    private final Map<String, Session> localSessions = new ConcurrentHashMap<String, Session>();
     
     /**
      * Synchronization distributed cache manager lock
@@ -278,12 +289,12 @@ public class InfinispanSessionManager
      */
     @Override
     protected Session createSessionFromCache(String sessionId) {
-        sessionId = this.stripDotSuffix(sessionId);
+        String cacheSessionId = this.stripDotSuffix(sessionId);
         Session session = null;
-        if (attributesCache.containsKey(sessionId) ) {
-            sessionId = sessionId + "." + this.getJvmRoute();
+        if (attributesCache.containsKey(cacheSessionId) ) {
             session = this.createSession(sessionId);
-            //set local sessions to cache session on this node
+            //set local session to cache session object on given node
+            //session is removed from all nodes through ispn event
             localSessions.put(sessionId, session);
         }
         
@@ -322,7 +333,8 @@ public class InfinispanSessionManager
      */
     @Override
     public void remove(Session session) {
-      AtomicMapLookup.removeAtomicMap(attributesCache, session.getId());
+      String cacheSessionId = this.stripDotSuffix( session.getId() );
+      AtomicMapLookup.removeAtomicMap(attributesCache, cacheSessionId );
       
       localSessions.remove(session.getIdInternal());
     }
@@ -424,6 +436,8 @@ public class InfinispanSessionManager
       Configuration configuration = attributesCache.getConfiguration();
       configuration.setClassLoader(Thread.currentThread().getContextClassLoader());
       manager.defineConfiguration(cacheName, configuration);
+      
+      cache.addListener( new SessionListener( this.getJvmRoute() ) );
     }
     
     /**
@@ -551,6 +565,70 @@ public class InfinispanSessionManager
             }
         }
 
+    }
+    
+    /**
+     * Listen to session attributes cache events.
+     * Remove local session object if session removed from session.
+     * 
+     * @author zhenek
+     * 
+     */
+    @Listener(sync = false)
+    public class SessionListener {
+        
+        private String jvmRoute;
+
+        /**
+         * Construct listener.
+         * 
+         * @param jvmRoute
+         */
+        public SessionListener(String jvmRoute){
+            this.jvmRoute = jvmRoute;
+        }
+
+        @CacheEntryRemoved()
+        public void removeSession(CacheEntryRemovedEvent<String, Object> event) {
+            if (!event.isPre()) {
+                return;
+            }
+
+            // only session prefix
+            String sessionId = event.getKey();
+
+            Cache<String, Object> cache = event.getCache();
+            String cacheName = cache.getName();
+            log.debug("REMOVED Session : " + cacheName
+                    + " removed session. Session id: " + sessionId);
+           
+            if ( localSessions.containsKey(sessionId) ){
+                localSessions.remove(sessionId);
+            } else {
+                //sessionId with jvmRoute suffix, could be any jvmRoute not just local
+                Set<String> keySet = localSessions.keySet();
+                for ( String key : keySet ){
+                    if ( key.startsWith(sessionId) ){
+                        localSessions.remove(key);
+                        break;
+                    }
+                }
+            }
+           
+        }
+
+        @CacheEntryCreated
+        public void addSession(CacheEntryCreatedEvent<String, Object> event) {
+            if (!event.isPre()) {
+                return;
+            }
+            String sessionId = event.getKey();
+
+            Cache<String, Object> cache = event.getCache();
+            String cacheName = cache.getName();
+            log.debug("CREATED Session : " + cacheName
+                    + " added session. Session id: " + sessionId);
+        }
     }
 }
 
