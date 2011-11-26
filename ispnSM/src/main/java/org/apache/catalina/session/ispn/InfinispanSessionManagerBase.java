@@ -38,7 +38,7 @@ import org.infinispan.Cache;
 
 /**
  * Copy of ManagerBase but the sessions variable is not defined.
- * I did not changes unless needed to have minumum changes to original ManagerBase class.
+ * I did not changes unless needed to have minimum changes to original ManagerBase class.
  * But I guess all members should be volatile!
  * 
  * abstract method to get sessions reference is used instead
