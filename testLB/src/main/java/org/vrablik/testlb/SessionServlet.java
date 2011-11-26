@@ -61,46 +61,52 @@ public class SessionServlet extends HttpServlet {
        out.print("<br/>");
     }
     
-    public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
-      String action = request.getParameter("action");
-      String message = "Action " + action + " finished successfully";
-      
-      HttpSession session = request.getSession();
-      boolean updateLog = true;
-      if ( "addToSession".equals(action)){
-        String key = request.getParameter("key");
-        String value = request.getParameter("value");
-        
-        session.setAttribute(key, value);
-        message += " Key " + key + " added to session. Value: " + value;
-      } else if ( "removeFromSession".equals(action)){
-          String key = request.getParameter("key");
-          session.removeAttribute(key);
-          message += " Key " + key + "removed from session.";
-      } else if ( "invalidateSession".equals(action)){
-          session.invalidate();
-          message += " Session has been invalidated.";
-          updateLog = false;
-      } else {
-        message = "Action is not recognized";
-      }
-      
-      if ( updateLog){
-          RequestLog oneLog = this.createRequestLog( action, request );
-          updateRequestLog(session, oneLog);
-      }
-      
-      PrintWriter out = this.getOutput(response);
-      out.print("<html>");
-      out.print("<body>");
-      out.print(message);
-      out.print("<br/>");
-      out.print("<a href=\"index.jsp\"> Back </a><br/><br/>");
-      out.print("</body>");
-      out.print("</html>");
-      
-      out.flush();
-      out.close();
+    public void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String action = request.getParameter("action");
+        String message = "Action " + action + " finished successfully";
+
+        HttpSession session = request.getSession();
+        boolean updateLog = true;
+        if ("addToSession".equals(action)) {
+            String key = request.getParameter("key");
+            String value = request.getParameter("value");
+
+            session.setAttribute(key, value);
+            message += " Key " + key + " added to session. Value: " + value;
+        } else if ("removeFromSession".equals(action)) {
+            String key = request.getParameter("key");
+            session.removeAttribute(key);
+            message += " Key " + key + "removed from session.";
+        } else if ("invalidateSession".equals(action)) {
+            session.invalidate();
+            message += " Session has been invalidated.";
+            updateLog = false;
+        } else {
+            message = "Action is not recognized";
+        }
+
+        if (updateLog) {
+            RequestLog oneLog = this.createRequestLog(action, request);
+            updateRequestLog(session, oneLog);
+        }
+
+        PrintWriter out = null;
+        try {
+            out = this.getOutput(response);
+            out.print("<html>");
+            out.print("<body>");
+            out.print(message);
+            out.print("<br/>");
+            out.print("<a href=\"index.jsp\"> Back </a><br/><br/>");
+            out.print("</body>");
+            out.print("</html>");
+            out.flush();
+        } finally {
+            if (out != null) {
+                out.close();
+            }
+        }
     }
     
     private RequestLog createRequestLog(String action, HttpServletRequest request) throws UnknownHostException{
