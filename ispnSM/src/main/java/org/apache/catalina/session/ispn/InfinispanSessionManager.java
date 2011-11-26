@@ -81,12 +81,12 @@ public class InfinispanSessionManager
     /**
      * Synchronization distributed cache manager lock
      */
-    private static Object managerLock = new Object();
+    private Object managerLock = new Object();
     
     /**
      * Distributed cache manager
      */
-    private static DefaultCacheManager manager;
+    private DefaultCacheManager manager;
 
     // ------------------------------------------------------------- Properties
 
@@ -262,9 +262,6 @@ public class InfinispanSessionManager
         if (sessionId == null){
             return null;
         }
-        
-        String newSessionId = sessionId;
-        
  
         int index = sessionId.indexOf(".");
         if (index > 0) {
@@ -410,10 +407,17 @@ public class InfinispanSessionManager
      * @throws LifecycleException
      */
     private void initInfinispan() throws LifecycleException {
-      System.out.println("Initialize infinispan cache app: " +  container.getName());
-      DefaultCacheManager manager = initializeCacheManager();
+        
+      String containerName = container.getName();
+      if (containerName.startsWith("/")){
+          //remove leading 
+          containerName = containerName.substring(1);
+      }
       
-      String cacheName = "_session_attr" + container.getName();
+      System.out.println("Initialize infinispan cache app: " +  containerName);
+      DefaultCacheManager manager = initializeCacheManager( containerName );
+      
+      String cacheName = "_session_attr" + containerName;
       Cache<String, Object> cache = manager.getCache(cacheName);
       //use war app class loader
       attributesCache = new DecoratedCache<String, Object>(cache.getAdvancedCache(), Thread.currentThread().getContextClassLoader() );
@@ -424,12 +428,14 @@ public class InfinispanSessionManager
     
     /**
      * Initialize cache manager 
+     * @param suffix  config file suffix (example suffix testLB config file in conf directory
+     * is sessionInfinispanConfigtestLB.xml
      * @return
      * @throws LifecycleException
      */
-    private DefaultCacheManager initializeCacheManager()
+    private DefaultCacheManager initializeCacheManager(String suffix)
             throws LifecycleException {
-        String configFileName = "sessionInfinispanConfig.xml";
+        String configFileName = "sessionInfinispanConfig" + suffix + ".xml";
         
         String baseDirName = System.getenv("CATALINA_BASE");
         String configFileBase =  baseDirName + "/conf/" + configFileName;
@@ -454,14 +460,8 @@ public class InfinispanSessionManager
         }
         
         try {
-            if (manager == null) {
-                synchronized (managerLock) {
-                    if (manager == null) {
-                        System.out.println("Initialize infinispan cache manager. Config file: " + configFile.getAbsolutePath());
-                        manager = new DefaultCacheManager(configFile.getAbsolutePath());
-                    }
-                }
-            }
+             System.out.println("Initialize infinispan cache manager. Config file: " + configFile.getAbsolutePath());
+             manager = new DefaultCacheManager(configFile.getAbsolutePath());
         } catch (Exception ex) {
             String message = "Error initializing distributed session cache! ConfigFileName:" + configFile.getAbsolutePath();
             throw new LifecycleException(message, ex);
