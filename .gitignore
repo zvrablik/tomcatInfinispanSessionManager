@@ -28,6 +28,9 @@ bin
 # NetBeans specific files/directories
 .nbattrs
 
+#test directories
+test-output
+
 # Miscellaneous
 *.log
 *.diff
