@@ -82,6 +82,8 @@ session manager in all war applications
 settings. The file name must be: sessionInfinispanConfig<appName>.xml
 
 Application with name example must provide infinispan configuration in file: sessionInfinispanConfigexamples.xml
+Caches are created with name _session_attr_<applicationName> from default values. Configure cache with name _session_attr_testLB
+to specify custom cache configuration of testLB application.
 
 Example of sessionInfinispan config file:
 
