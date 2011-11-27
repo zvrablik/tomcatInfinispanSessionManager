@@ -18,7 +18,11 @@ import org.apache.catalina.util.LifecycleSupport;
 import org.infinispan.Cache;
 import org.infinispan.DecoratedCache;
 import org.infinispan.atomic.AtomicMapLookup;
-import org.infinispan.config.Configuration;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -426,14 +430,14 @@ public class InfinispanSessionManager
           containerName = containerName.substring(1);
       }
       
-      System.out.println("Initialize infinispan cache app: " +  containerName);
+      log.debug("Initialize infinispan cache app: " +  containerName);
       DefaultCacheManager manager = initializeCacheManager( containerName );
       
-      String cacheName = "_session_attr" + containerName;
+      String cacheName = "_session_attr_" + containerName;
       Cache<String, Object> cache = manager.getCache(cacheName);
       //use war app class loader
       attributesCache = new DecoratedCache<String, Object>(cache.getAdvancedCache(), Thread.currentThread().getContextClassLoader() );
-      Configuration configuration = attributesCache.getConfiguration();
+      org.infinispan.config.Configuration configuration = attributesCache.getConfiguration();
       configuration.setClassLoader(Thread.currentThread().getContextClassLoader());
       manager.defineConfiguration(cacheName, configuration);
       
@@ -442,14 +446,14 @@ public class InfinispanSessionManager
     
     /**
      * Initialize cache manager 
-     * @param suffix  config file suffix (example suffix testLB config file in conf directory
+     * @param appName  config file suffix (example suffix testLB config file in conf directory
      * is sessionInfinispanConfigtestLB.xml
      * @return
      * @throws LifecycleException
      */
-    private DefaultCacheManager initializeCacheManager(String suffix)
+    private DefaultCacheManager initializeCacheManager(String appName)
             throws LifecycleException {
-        String configFileName = "sessionInfinispanConfig" + suffix + ".xml";
+        String configFileName = "sessionInfinispanConfig" + appName + ".xml";
         
         String baseDirName = System.getenv("CATALINA_BASE");
         String configFileBase =  baseDirName + "/conf/" + configFileName;
@@ -461,27 +465,78 @@ public class InfinispanSessionManager
             configFile = new File(configFileHome);
         }
         
+        boolean useDefault = false;
+        
         if ( !configFile.exists() ) {
             String message = "Config file " + configFileName + " doesn't exist.";
             message += "Tested files: " + configFileBase + " and " + configFileHome;
-            throw new LifecycleException(message);
+            message += " Used default infinispan configuration instead.";
+            log.error(message);
+            useDefault = true;
         }
         
         if (!(configFile.isFile() && configFile.canRead())){
             String message = "Config file " + configFile.getAbsoluteFile() 
                     + " is not file or current tomcat process is not permitted to read this file.";
-            throw new LifecycleException(message);
+            message += " Used default infinispan configuration instead.";
+            
+            log.error(message);
+            useDefault = true;
         }
         
         try {
-             System.out.println("Initialize infinispan cache manager. Config file: " + configFile.getAbsolutePath());
-             manager = new DefaultCacheManager(configFile.getAbsolutePath());
+             if ( useDefault ){
+                 GlobalConfiguration globalDefaultConfig = this.createGlobalDefaultInfinispanConfiguration(appName);
+                 Configuration cacheConfiguration = this.createDefaultInfinispanConfiguration(appName);
+                 
+                 log.debug("Initialize infinispan cache manager. Default cache settings used. Invalid config file: " + configFile.getAbsoluteFile());
+                 manager = new DefaultCacheManager(globalDefaultConfig, cacheConfiguration);
+             } else {
+                 
+                 log.debug("Initialize infinispan cache manager. Config file: " + configFile.getAbsolutePath());
+                 manager = new DefaultCacheManager(configFile.getAbsolutePath());
+             }
         } catch (Exception ex) {
             String message = "Error initializing distributed session cache! ConfigFileName:" + configFile.getAbsolutePath();
+            if ( useDefault ){
+                message += " Used default infinispan configuration.";
+            }
+            //to log root error, lifecycleException doesn't do it
+            log.error(message, ex);
             throw new LifecycleException(message, ex);
         }
 
         return manager;
+    }
+    
+    /**
+     * Create default global config.
+     * @param appName
+     * @return
+     */
+    private GlobalConfiguration createGlobalDefaultInfinispanConfiguration(String appName){
+        GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+        
+        gcb.transport().clusterName("tomcatSession");
+        gcb.globalJmxStatistics().allowDuplicateDomains(true).jmxDomain("org.infinispan." + appName);
+        
+        return gcb.build();
+    }
+    
+    /**
+     * Create default infinispan config
+     * @param appName
+     * @return
+     */
+    private Configuration createDefaultInfinispanConfiguration(String appName){
+        ConfigurationBuilder cb = new ConfigurationBuilder();
+        cb.jmxStatistics();
+        cb.clustering().cacheMode(CacheMode.DIST_SYNC).l1().disable().lifespan(600000).hash().numOwners(2).rehashRpcTimeout(6000);
+        cb.invocationBatching();
+        //default config
+        //cb.name("_session_attr_" + appName);
+        
+        return cb.build();
     }
 
     /**
