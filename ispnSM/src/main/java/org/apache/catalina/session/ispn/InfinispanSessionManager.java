@@ -293,9 +293,8 @@ public class InfinispanSessionManager
      */
     @Override
     protected Session createSessionFromCache(String sessionId) {
-        String cacheSessionId = this.stripDotSuffix(sessionId);
         Session session = null;
-        if (attributesCache.containsKey(cacheSessionId) ) {
+        if (existsSessionId(sessionId) ) {
             session = this.createSession(sessionId);
             //set local session to cache session object on given node
             //session is removed from all nodes through ispn event
@@ -303,6 +302,18 @@ public class InfinispanSessionManager
         }
         
         return session;
+    }
+
+
+    /**
+     * Check if session id is used in cluster
+     * @param sessionId
+     * @return
+     */
+    @Override
+    protected boolean existsSessionId(String sessionId) {
+        String cacheSessionId = this.stripDotSuffix(sessionId);
+        return attributesCache.containsKey(cacheSessionId);
     }
 
 

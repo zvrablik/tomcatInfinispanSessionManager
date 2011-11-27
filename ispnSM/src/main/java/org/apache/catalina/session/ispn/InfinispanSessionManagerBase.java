@@ -800,6 +800,11 @@ import org.infinispan.Cache;
           if (sessionId == null) {
               sessionId = generateSessionId();
           };
+          
+          while (this.existsSessionId(sessionId)){
+              sessionId = generateSessionId();
+          }
+          
               
           // Recycle or create a Session instance
           Session session = createEmptySession(sessionId);
@@ -1320,4 +1325,11 @@ import org.infinispan.Cache;
        * @return
        */
       abstract protected Session createSessionFromCache(String sessionId);
+      
+      /**
+       * Check if session id is used in cluster
+       * @param sessionId
+       * @return true if sessionId already used in cluster
+       */
+      abstract protected boolean existsSessionId(String sessionId);
   }
