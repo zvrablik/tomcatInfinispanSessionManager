@@ -9,32 +9,30 @@ ispnSM
 * tomcat session manager using infinispan to distribute session state
   - Tomcat org.apache.catalina.session.ManagerBase and org.apache.catalina.session.StandardManager used as starting point
   - doesn't use any Tomcat clustering code, just session manager
-  - infinispan caches use sessionId without jvmRoute, only local session objects use full sessionId with jvmRoute
+  - infinispan caches use sessionId without jvmRoute, only local session objects use sessionId with jvmRoute
       - it is not necessary to update cache when one node fails in sticky session env.
   - uses FineGrainedAtomicMap<K,V> - do I still need distributed transactions?
   - each war application has its own cache
+  - remove local session object if session removed on any other cluster node
   
 problems:
   - is it possible to use cache per classloader? Or do I have to create CacheManager for each war application separately?
   
 TODO list:
-  - remove local session object if session removed on any other cluster node
   - create new session to store session state - not to mix metadata with session attributes stored by user
        - necessary to distribute last accessed time to avoid session invalidation if not accessed in one node
-  - session events how to distribute
   - session id rename
   - see ispnSM README for more details
 
 memoryAgent  
 =======================================================
-  - get memory consumption of session objects
-TODO:
-  implement jmx Bean to get session memory consumption by session id
-
+  - get memory consumption of objects
 
 testLB
 =======================================================
   - application to test ispnSM
+  - compute session memory consumption with JAVA_OPTS="$JAVA_OPTS -javaagent:./lib/memoryAgent-prototype.jar "
+  - without javaagent performed session memory consumption estimation 
 
 TODO:
   - JMeter load tests or any other 

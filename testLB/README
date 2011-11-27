@@ -10,3 +10,5 @@ request logs contains timestamp, host ( clusterNode) name and ip address and rem
 * add new value to session
 * remove value from session
 * invalidate session
+* compute session memory consumption per session item
+    - this is useful for debugging, big session objects need more time to replicate to requested session nodes and any get/update operatin is slower too
