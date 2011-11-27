@@ -8,8 +8,18 @@ http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
         <servlet-name>Session</servlet-name>
         <servlet-class>org.vrablik.testlb.SessionServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>SessionMemoryCounterServlet</servlet-name>
+        <servlet-class>org.vrablik.testlb.SessionMemoryCounterServlet</servlet-class>
+    </servlet>
+    
     <servlet-mapping>
         <servlet-name>Session</servlet-name>
         <url-pattern>/session</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>SessionMemoryCounterServlet</servlet-name>
+        <url-pattern>/sessionCounter</url-pattern>
     </servlet-mapping>
 </web-app>

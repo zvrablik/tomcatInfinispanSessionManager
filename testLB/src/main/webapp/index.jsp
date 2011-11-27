@@ -7,7 +7,7 @@
 <a href="session"> Get session state</a>
 <br/>
 <br/>
-<h1>Add to session</h1>
+<h2>Add to session</h2>
 <form action='session' method="POST">
     
     Key: <input type="TEXT" name="key">
@@ -18,7 +18,7 @@
     <input type="HIDDEN" name="action" value="addToSession">
 </form>
 
-<h1>Remove from session</h1>
+<h2>Remove from session</h2>
 <form action='session' method="POST">
     
     Key: <input type="TEXT" name="key">
@@ -26,11 +26,17 @@
     <input type="HIDDEN" name="action" value="removeFromSession">
 </form>
 
-<h1>Invalidate session</h1>
+<h2>Invalidate session</h2>
 <form action='session' method="POST">
     
     <input type="SUBMIT" value="Invalidate session">
     <input type="HIDDEN" name="action" value="invalidateSession">
+</form>
+
+<h2>Get session size</h2>
+<form action='sessionCounter' method="GET">
+    
+    <input type="SUBMIT" value="Get session size">
 </form>
 
 </body>
