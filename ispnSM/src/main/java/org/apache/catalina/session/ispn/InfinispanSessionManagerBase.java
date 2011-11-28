@@ -1318,6 +1318,15 @@ import org.infinispan.Cache;
       abstract protected String stripJvmRoute(String sessionId);
       
       /**
+       * Remove any suffix starting with dot (.)
+       * 
+       * @param sessionId session id with possible . suffix
+       * 
+       * @return sessionId without any dot suffix
+       */
+      abstract protected String stripDotSuffix(String sessionId);
+      
+      /**
        * Get session if exists in distributed cache or null
        * set session to local sessions if exist in cache
        * 

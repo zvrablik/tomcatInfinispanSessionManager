@@ -350,16 +350,21 @@ public class InfinispanStandardSession
        * @param id The new session identifier
        */
       public void setId(String id) {
-
+          Map<String, Object> allAttributes = this.attributes.getAll();
+          
+          //remove sessions from all nodes through manager.remove
+          //it is not necessary re-create these session on other nodes,
+          //will be created on first request of that nodes
           if ((this.id != null) && (manager != null))
               manager.remove(this);
 
           this.id = id;
+          this.attributes.setSessionId(manager.stripDotSuffix(id));
 
-          if (manager != null)
+          if (manager != null){
+              this.attributes.putAll(allAttributes);
               manager.add(this);
-              
-          //TODO infinispan set new session id to attributes    
+          }        
           tellNew();
       }
 
@@ -905,6 +910,7 @@ public class InfinispanStandardSession
 
           // Reset the instance variables associated with this Session
           attributes.clear();
+          attributes.setSessionId("");
           setAuthType(null);
           creationTime = 0L;
           expiring = false;
@@ -1671,6 +1677,27 @@ public class InfinispanStandardSession
         FineGrainedAtomicMap<String, Object> attributes = getCachedAttributes();
         
         return attributes.get( key );
+    }
+    
+    /**
+     * Get all session attributes as Map
+     * @return
+     */
+    public Map<String, Object> getAll(){
+        FineGrainedAtomicMap<String, Object> attributes = getCachedAttributes();
+        Map<String, Object> attribs = new HashMap<String, Object>();
+        attribs.putAll( attributes );
+        
+        return attribs;
+    }
+    
+    /**
+     * Set all attributes to session attributes
+     * @param attributes
+     */
+    public void putAll(Map<String, Object> attributes){
+        FineGrainedAtomicMap<String, Object> attribs = getCachedAttributes();
+        attribs.putAll(attributes);
     }
 
     /**
