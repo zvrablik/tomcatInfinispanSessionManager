@@ -96,12 +96,12 @@ public class InfinispanSessionManager
     /**
      * Synchronization distributed cache manager lock
      */
-    private Object managerLock = new Object();
+    private static Object managerLock = new Object();
     
     /**
      * Distributed cache manager
      */
-    private DefaultCacheManager manager;
+    private static DefaultCacheManager manager;
 
     // ------------------------------------------------------------- Properties
 
@@ -447,99 +447,117 @@ public class InfinispanSessionManager
       String cacheName = "_session_attr_" + containerName;
       Cache<String, Object> cache = manager.getCache(cacheName);
       //use war app class loader
-      attributesCache = new DecoratedCache<String, Object>(cache.getAdvancedCache(), Thread.currentThread().getContextClassLoader() );
+      ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+      System.out.println("Cache classloader name: " + contextClassLoader.toString());
+      attributesCache = new DecoratedCache<String, Object>(cache.getAdvancedCache(), contextClassLoader );
       org.infinispan.config.Configuration configuration = attributesCache.getConfiguration();
-      configuration.setClassLoader(Thread.currentThread().getContextClassLoader());
+      configuration.setClassLoader(contextClassLoader);
       manager.defineConfiguration(cacheName, configuration);
       
       cache.addListener( new SessionListener( this.getJvmRoute() ) );
     }
     
     /**
-     * Initialize cache manager 
-     * @param appName  config file suffix (example suffix testLB config file in conf directory
-     * is sessionInfinispanConfigtestLB.xml
+     * Initialize cache manager
+     * 
+     * @param appName
+     *            config file suffix (example suffix testLB config file in conf
+     *            directory is sessionInfinispanConfigtestLB.xml
      * @return
      * @throws LifecycleException
      */
     private DefaultCacheManager initializeCacheManager(String appName)
             throws LifecycleException {
-        String configFileName = "sessionInfinispanConfig" + appName + ".xml";
-        
-        String baseDirName = System.getenv("CATALINA_BASE");
-        String configFileBase =  baseDirName + "/conf/" + configFileName;
-        String configFileHome = null;
-        File configFile = new File( configFileBase );
-        if ( !configFile.exists()) {
-            String homeDirName = System.getenv("CATALINA_HOME");
-            configFileHome = homeDirName + "/conf/" + configFileName;
-            configFile = new File(configFileHome);
-        }
-        
-        boolean useDefault = false;
-        
-        if ( !configFile.exists() ) {
-            String message = "Config file " + configFileName + " doesn't exist.";
-            message += "Tested files: " + configFileBase + " and " + configFileHome;
-            message += " Used default infinispan configuration instead.";
-            log.error(message);
-            useDefault = true;
-        }
-        
-        if (!(configFile.isFile() && configFile.canRead())){
-            String message = "Config file " + configFile.getAbsoluteFile() 
-                    + " is not file or current tomcat process is not permitted to read this file.";
-            message += " Used default infinispan configuration instead.";
-            
-            log.error(message);
-            useDefault = true;
-        }
-        
-        try {
-             if ( useDefault ){
-                 GlobalConfiguration globalDefaultConfig = this.createGlobalDefaultInfinispanConfiguration(appName);
-                 Configuration cacheConfiguration = this.createDefaultInfinispanConfiguration(appName);
-                 
-                 log.debug("Initialize infinispan cache manager. Default cache settings used. Invalid config file: " + configFile.getAbsoluteFile());
-                 manager = new DefaultCacheManager(globalDefaultConfig, cacheConfiguration);
-             } else {
-                 
-                 log.debug("Initialize infinispan cache manager. Config file: " + configFile.getAbsolutePath());
-                 manager = new DefaultCacheManager(configFile.getAbsolutePath());
-             }
-        } catch (Exception ex) {
-            String message = "Error initializing distributed session cache! ConfigFileName:" + configFile.getAbsolutePath();
-            if ( useDefault ){
-                message += " Used default infinispan configuration.";
-            }
-            //to log root error, lifecycleException doesn't do it
-            log.error(message, ex);
-            throw new LifecycleException(message, ex);
-        }
 
-        return manager;
+        synchronized (managerLock) {
+            if (manager != null) {
+                return manager;
+            }
+
+            String configFileName = "sessionInfinispanConfig.xml";
+
+            String baseDirName = System.getenv("CATALINA_BASE");
+            String configFileBase = baseDirName + "/conf/" + configFileName;
+            String configFileHome = null;
+            File configFile = new File(configFileBase);
+            if (!configFile.exists()) {
+                String homeDirName = System.getenv("CATALINA_HOME");
+                configFileHome = homeDirName + "/conf/" + configFileName;
+                configFile = new File(configFileHome);
+            }
+
+            boolean useDefault = false;
+
+            if (!configFile.exists()) {
+                String message = "Config file " + configFileName
+                        + " doesn't exist.";
+                message += "Tested files: " + configFileBase + " and "
+                        + configFileHome;
+                message += " Used default infinispan configuration instead.";
+                log.error(message);
+                useDefault = true;
+            }
+
+            if (!(configFile.isFile() && configFile.canRead())) {
+                String message = "Config file "
+                        + configFile.getAbsoluteFile()
+                        + " is not file or current tomcat process is not permitted to read this file.";
+                message += " Used default infinispan configuration instead.";
+
+                log.error(message);
+                useDefault = true;
+            }
+
+            try {
+                if (useDefault) {
+                    GlobalConfiguration globalDefaultConfig = this
+                            .createGlobalDefaultInfinispanConfiguration();
+                    Configuration cacheConfiguration = this
+                            .createDefaultInfinispanConfiguration();
+                    log.debug("Initialize infinispan cache manager. Default cache settings used. Invalid config file: "
+                            + configFile.getAbsoluteFile());
+                    manager = new DefaultCacheManager(globalDefaultConfig,
+                            cacheConfiguration);
+                } else {
+
+                    log.debug("Initialize infinispan cache manager. Config file: "
+                            + configFile.getAbsolutePath());
+                    manager = new DefaultCacheManager(
+                            configFile.getAbsolutePath());
+                }
+            } catch (Exception ex) {
+                String message = "Error initializing distributed session cache! ConfigFileName:"
+                        + configFile.getAbsolutePath();
+                if (useDefault) {
+                    message += " Used default infinispan configuration.";
+                }
+                // to log root error, lifecycleException doesn't do it
+                log.error(message, ex);
+                throw new LifecycleException(message, ex);
+            }
+
+            return manager;
+        }
     }
     
     /**
      * Create default global config.
-     * @param appName
      * @return
      */
-    private GlobalConfiguration createGlobalDefaultInfinispanConfiguration(String appName){
+    private GlobalConfiguration createGlobalDefaultInfinispanConfiguration(){
         GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
         
         gcb.transport().clusterName("tomcatSession");
-        gcb.globalJmxStatistics().allowDuplicateDomains(true).jmxDomain("org.infinispan." + appName);
+        gcb.globalJmxStatistics().allowDuplicateDomains(true).jmxDomain("org.infinispan.tomcat.sessionManager");
         
         return gcb.build();
     }
     
     /**
      * Create default infinispan config
-     * @param appName
      * @return
      */
-    private Configuration createDefaultInfinispanConfiguration(String appName){
+    private Configuration createDefaultInfinispanConfiguration(){
         ConfigurationBuilder cb = new ConfigurationBuilder();
         cb.jmxStatistics();
         cb.clustering().cacheMode(CacheMode.DIST_SYNC).l1().disable().lifespan(600000).hash().numOwners(2).rehashRpcTimeout(6000);
