@@ -1,0 +1,12 @@
+* Does recycle work correctly? - the cache reference remains in the session, this works fine only if session could be reused in one war application, otherwise 
+it is not valid!
+
+* jmeter tests add/remove/update session attribute and than check
+
+* create new distributed cache to store session metadata - last activity, max timeout ....
+
+* session listeners - how to implement? write to metadata cache and broadcast through ispn listeners?
+
+* reuse one CacheManager - fix classloaders issue
+
+* is it necessary to lock before update session? Currently used FineGrainedAtomicMap to store session attributes
