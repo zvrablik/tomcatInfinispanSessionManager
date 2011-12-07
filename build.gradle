@@ -18,6 +18,6 @@ subprojects {
 
     jar.enabled = true
 	
-    infinispanVersion = '5.1.0.BETA5'
+    infinispanVersion = '5.1.0.CR1'
     tomcatVersion = '6.0.29'
 }
