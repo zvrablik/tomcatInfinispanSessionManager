@@ -4,6 +4,7 @@ dependencies {
    providedCompile "javax.servlet:servlet-api:2.5"
 	
    compile project(':memoryAgent')
+   compile 'org.apache.tomcat:juli:' + tomcatVersion
 
    testCompile "junit:junit:4.8.2"
 }
