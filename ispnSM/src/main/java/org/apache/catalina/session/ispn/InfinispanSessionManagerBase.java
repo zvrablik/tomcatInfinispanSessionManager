@@ -799,13 +799,12 @@ import org.infinispan.Cache;
          
           if (sessionId == null) {
               sessionId = generateSessionId();
+              
+              while (this.existsSessionId(sessionId)){
+                  sessionId = generateSessionId();
+              }
           };
           
-          while (this.existsSessionId(sessionId)){
-              sessionId = generateSessionId();
-          }
-          
-              
           // Recycle or create a Session instance
           Session session = createEmptySession(sessionId);
 
