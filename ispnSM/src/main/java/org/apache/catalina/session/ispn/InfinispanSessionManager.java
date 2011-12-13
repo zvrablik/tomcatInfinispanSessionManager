@@ -27,7 +27,9 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 
 /**
@@ -82,9 +84,14 @@ public class InfinispanSessionManager
     protected long processingTime = 0;
 
     /**
-     * distributed session cache
+     * distributed session attributes cache
      */
     private Cache<String, Object> attributesCache;
+    
+    /**
+     * distributed session metadata cache
+     */
+    private Cache<String, Object> metaCache;
     
     /**
      * Local sessions
@@ -232,7 +239,7 @@ public class InfinispanSessionManager
      */
     @Override
     Session createEmptySession(String sessionId) {
-        return new InfinispanStandardSession(this, attributesCache, sessionId);
+        return new InfinispanStandardSession(this, attributesCache, metaCache, sessionId);
     }
     
     /**
@@ -240,7 +247,7 @@ public class InfinispanSessionManager
      */
     public Session createEmptySession() {
         //TODO where it is used? BackupManager, DeltaManager, JDBCStore FileStore - shouldn't be used 
-        return new InfinispanStandardSession(this, attributesCache, null);
+        return new InfinispanStandardSession(this, attributesCache, metaCache, null);
     }
 
     
@@ -349,11 +356,15 @@ public class InfinispanSessionManager
     @Override
     public void remove(Session session) {
       String cacheSessionId = this.stripDotSuffix( session.getId() );
+      //remove session attributes
       AtomicMapLookup.removeAtomicMap(attributesCache, cacheSessionId );
+      //remove session metadata
+      AtomicMapLookup.removeAtomicMap(metaCache, cacheSessionId );
+      
+      log.debug("Remove session from cluster. Session id: " + session.getId());
       
       localSessions.remove(session.getIdInternal());
     }
-
 
     /**
      * Add a lifecycle event listener to this component.
@@ -445,14 +456,32 @@ public class InfinispanSessionManager
       DefaultCacheManager manager = initializeCacheManager( containerName );
       
       String cacheName = "_session_attr_" + containerName;
-      Cache<String, Object> cache = manager.getCache(cacheName);
-      //use war app class loader
-      attributesCache = new DecoratedCache<String, Object>(cache.getAdvancedCache(), Thread.currentThread().getContextClassLoader() );
-      org.infinispan.config.Configuration configuration = attributesCache.getConfiguration();
-      configuration.setClassLoader(Thread.currentThread().getContextClassLoader());
-      manager.defineConfiguration(cacheName, configuration);
+      attributesCache = getCacheObject(manager, cacheName);
+      attributesCache.addListener( new SessionListener( this.getJvmRoute() ) );
       
-      cache.addListener( new SessionListener( this.getJvmRoute() ) );
+      
+      String metaCacheName = "_session_meta_" + containerName;
+      metaCache = getCacheObject(manager, metaCacheName);
+    }
+
+    /**
+     * Get cache instance
+     * 
+     * @param manager   cache manager
+     * @param cacheName name of cache to get
+     * 
+     * @return wrapped cache to use correct class loader
+     */
+    private Cache<String, Object> getCacheObject(DefaultCacheManager manager,
+            String cacheName) {
+        Cache<String, Object> cache = manager.getCache(cacheName);
+          //use war app class loader
+        Cache<String, Object> wrappedCache = new DecoratedCache<String, Object>(cache.getAdvancedCache(), Thread.currentThread().getContextClassLoader() );
+        org.infinispan.config.Configuration configuration = wrappedCache.getConfiguration();
+        configuration.setClassLoader(Thread.currentThread().getContextClassLoader());
+        manager.defineConfiguration(cacheName, configuration);
+        
+        return wrappedCache;
     }
     
     /**
@@ -665,7 +694,7 @@ public class InfinispanSessionManager
 
             Cache<String, Object> cache = event.getCache();
             String cacheName = cache.getName();
-            log.debug("REMOVED Session : " + cacheName
+            log.debug("REMOVED event Cache : " + cacheName
                     + " removed session. Session id: " + sessionId);
            
             if ( localSessions.containsKey(sessionId) ){
@@ -682,6 +711,19 @@ public class InfinispanSessionManager
             }
            
         }
+        
+        @CacheEntryVisited
+        public void visitSession(CacheEntryEvent<String, Object> event) {
+            if (!event.isPre()) {
+                return;
+            }
+            String sessionId = event.getKey();
+
+            Cache<String, Object> cache = event.getCache();
+            String cacheName = cache.getName();
+            log.debug("VISITED event Cache : " + cacheName
+                    + " visited session. Session id: " + sessionId);
+        }
 
         @CacheEntryCreated
         public void addSession(CacheEntryCreatedEvent<String, Object> event) {
@@ -692,7 +734,7 @@ public class InfinispanSessionManager
 
             Cache<String, Object> cache = event.getCache();
             String cacheName = cache.getName();
-            log.debug("CREATED Session : " + cacheName
+            log.info("CREATED event Cache : " + cacheName
                     + " added session. Session id: " + sessionId);
         }
     }

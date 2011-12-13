@@ -7,7 +7,9 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -38,6 +40,10 @@ public class SessionServlet extends HttpServlet {
         out.print("<body>");
         out.print("<a href=\"index.jsp\"> Back </a><br/><br/>");
         
+        String metaAttributes = this.getSessionMetaAttributes(req.getSession());
+        out.println(metaAttributes);
+        out.println("<br/>");
+        
         while ( attributeNames.hasMoreElements()){
           String key = attributeNames.nextElement();
           if ( !REQUEST_LOG_NAME.equals(key)){
@@ -54,6 +60,30 @@ public class SessionServlet extends HttpServlet {
         out.close();
     }
     
+    /**
+     * Session meta attributes
+     * @param session
+     * @return
+     */
+    private String getSessionMetaAttributes(HttpSession session) {
+        Map<String, String> metaAttributes = new HashMap<String, String>();
+        
+        metaAttributes.put( "sessionId", session.getId());
+        metaAttributes.put( "cration time", String.valueOf( new Date( session.getCreationTime() ) ) );
+        metaAttributes.put( "last accessed time", String.valueOf(  new Date( session.getLastAccessedTime() ) ) );
+        metaAttributes.put( "max inactive interval", String.valueOf( session.getMaxInactiveInterval() ) );
+        metaAttributes.put( "last access before (miliseconds)", String.valueOf( 
+                System.currentTimeMillis() - session.getLastAccessedTime() ) );
+        
+        StringBuilder s = new StringBuilder(200);
+        
+        for (Map.Entry<String, String> item : metaAttributes.entrySet() ) {
+            s.append( item.getKey() ).append(" : ").append(item.getValue() ).append("<br/>");
+        }
+        
+        return s.toString();
+    }
+
     private void renderOneItem(PrintWriter out, HttpSession session,
         String key) {
        Object value = session.getAttribute(key);
@@ -82,6 +112,11 @@ public class SessionServlet extends HttpServlet {
             session.invalidate();
             message += " Session has been invalidated.";
             updateLog = false;
+        } else if ("setSessionMII".equals(action)) {
+            //in seconds
+            String mii = request.getParameter("mii");
+            session.setMaxInactiveInterval( Integer.valueOf( mii ) );
+            message += " Max inactive interval set to (seconds): " + mii;
         } else {
             message = "Action is not recognized";
         }
@@ -112,7 +147,7 @@ public class SessionServlet extends HttpServlet {
     private RequestLog createRequestLog(String action, HttpServletRequest request) throws UnknownHostException{
       InetAddress addr = InetAddress.getLocalHost();
       String localName = addr.getHostName();
-      byte[] ipAddr = addr.getAddress();
+      String ipAddr = addr.getHostAddress();
      
       
       String remoteHost = request.getRemoteHost();

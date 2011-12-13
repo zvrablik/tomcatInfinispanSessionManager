@@ -21,7 +21,7 @@ public class RequestLog implements Serializable {
   private String action;
   private Date time;
   private String localHostName;
-  private byte[] localHostAddr;
+  private String localHostAddr;
   private String remoteHostAddr;
   private String remoteHostName;
 
@@ -31,7 +31,7 @@ public class RequestLog implements Serializable {
    * @param time      timestamp
    * @param action    what action
    */
-  public RequestLog(String localHostName, byte[] localHostAddr, 
+  public RequestLog(String localHostName, String localHostAddr, 
       String remoteHostAddr, String remoteHostName, Date time, String action){
     this.action = action;
     this.time = time;
@@ -45,7 +45,7 @@ public class RequestLog implements Serializable {
   public String toString() {
     return "<br/>RequestLog [action=" + action + ", time=" + time
         + ", localHostName=" + localHostName + ", localHostAddr="
-        + Arrays.toString(localHostAddr) + ", browserHostAddr=" + remoteHostAddr
+        + localHostAddr + ", browserHostAddr=" + remoteHostAddr
         + ", browserHostName=" + remoteHostName + "]";
   }
 

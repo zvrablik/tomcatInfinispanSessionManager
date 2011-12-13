@@ -33,7 +33,14 @@
     <input type="HIDDEN" name="action" value="invalidateSession" />
 </form>
 
-<h2>Get session size</h2>
+<h2>Set max inactivity interval</h2>
+<form action='session' method="POST">
+    Time (in seconds): <input type="TEXT" name="mii" />
+    <input type="SUBMIT" value="Set max inactivity interval" />
+    <input type="HIDDEN" name="action" value="setSessionMII" />
+</form>
+
+<h2>Get session memory consumption</h2>
 <form action='sessionCounter' method="GET">
     
     <input type="SUBMIT" value="Get session size"/>

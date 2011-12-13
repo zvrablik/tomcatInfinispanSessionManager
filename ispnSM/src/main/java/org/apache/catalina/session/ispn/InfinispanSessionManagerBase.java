@@ -911,8 +911,10 @@ import org.infinispan.Cache;
       /**
        * Get new session class to be used in the doLoad() method.
        */
-      protected InfinispanStandardSession getNewSession(Cache<String, ?> cache, String sessionId ) {
-          return new InfinispanStandardSession(this, cache, sessionId );
+      protected InfinispanStandardSession getNewSession(Cache<String, ?> cacheAttributes,
+              Cache<String, ?> metaCache,
+              String sessionId ) {
+          return new InfinispanStandardSession(this, cacheAttributes, metaCache, sessionId );
       }
 
 

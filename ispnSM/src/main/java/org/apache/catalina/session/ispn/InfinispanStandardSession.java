@@ -86,6 +86,7 @@ public class InfinispanStandardSession
           Globals.STRICT_SERVLET_COMPLIANCE
           || Boolean.valueOf(System.getProperty("org.apache.catalina.session.StandardSession.ACTIVITY_CHECK", "false")).booleanValue();
 
+
       // ----------------------------------------------------------- Constructors
 
 
@@ -93,18 +94,23 @@ public class InfinispanStandardSession
        * Construct a new Session associated with the specified Manager.
        *
        * @param manager The manager with which this Session is associated
-       * @param cache distributed cache
+       * @param cache attributes - distributed cache
+       * @param metaCache sessions metadata - distributed cache
        * @param sessionId  created session id
        * 
        */
-      public InfinispanStandardSession(InfinispanSessionManagerBase manager, Cache<String, ?> cache, String sessionId) {
+      public InfinispanStandardSession(InfinispanSessionManagerBase manager, Cache<String, ?> cache, 
+              Cache<String, ?> metaCache, String sessionId) {
 
           super();
           this.manager = manager;
           this.cache = cache;
+          this.metaCache = metaCache;
           //store session without suffix to avoid session rename after cluster node disabled by load balancer
           String sessionIdWithoutJvmRoute = manager.stripJvmRoute(sessionId);
           this.attributes = new SessionAttributesCache(cache, sessionIdWithoutJvmRoute);
+          
+          this.metadata = new SessionMetaAttributes(metaCache, sessionIdWithoutJvmRoute);
 
           // Initialize access count
           if (ACTIVITY_CHECK) {
@@ -138,11 +144,7 @@ public class InfinispanStandardSession
       protected transient String authType = null;
 
 
-      /**
-       * The time this session was created, in milliseconds since midnight,
-       * January 1, 1970 GMT.
-       */
-      protected long creationTime = 0L;
+      
 
 
       /**
@@ -179,13 +181,6 @@ public class InfinispanStandardSession
        */
       protected static final String info = "InfinispanStandardSession/1.0";
 
-
-      /**
-       * The last accessed time for this Session.
-       */
-      protected volatile long lastAccessedTime = creationTime;
-
-
       /**
        * The session event listeners for this Session.
        */
@@ -199,7 +194,7 @@ public class InfinispanStandardSession
 
 
       /**
-       * distributed cache
+       * distributed cache to store attributes
        */       
       protected transient Cache<String, ?> cache = null;
       
@@ -208,16 +203,12 @@ public class InfinispanStandardSession
        */
       protected SessionAttributesCache attributes = null;
       
-      
-
-
       /**
-       * The maximum time interval, in seconds, between client requests before
-       * the servlet container may invalidate this session.  A negative time
-       * indicates that the session should never time out.
+       * distributed cache to store session metadata
        */
-      protected int maxInactiveInterval = -1;
-
+      private Cache<String, ?> metaCache = null;
+      
+      protected SessionMetaAttributes metadata = null;
 
       /**
        * Flag indicating whether this session is new or not.
@@ -267,13 +258,6 @@ public class InfinispanStandardSession
       protected transient PropertyChangeSupport support =
           new PropertyChangeSupport(this);
 
-
-      /**
-       * The current accessed time for this session.
-       */
-      protected volatile long thisAccessedTime = creationTime;
-
-
       /**
        * The access count for this session.
        */
@@ -316,11 +300,9 @@ public class InfinispanStandardSession
        * @param time The new creation time
        */
       public void setCreationTime(long time) {
-
-          this.creationTime = time;
-          this.lastAccessedTime = time;
-          this.thisAccessedTime = time;
-
+          metadata.setCreationTime(time);
+          metadata.setLastAccessedTime(time);
+          metadata.setThisAccessedTime(time);
       }
 
 
@@ -351,6 +333,10 @@ public class InfinispanStandardSession
        */
       public void setId(String id) {
           Map<String, Object> allAttributes = this.attributes.getAll();
+          long creationTime = metadata.getCreationTime();
+          long lastAccessedTime = metadata.getLastAccessedTime();
+          int maxInactiveInterval = metadata.getMaxInactiveInterval();
+          long thisAccessedTime = metadata.getThisAccessedTime();
           
           //remove sessions from all nodes through manager.remove
           //it is not necessary re-create these session on other nodes,
@@ -359,12 +345,20 @@ public class InfinispanStandardSession
               manager.remove(this);
 
           this.id = id;
-          this.attributes.setSessionId(manager.stripDotSuffix(id));
+          this.attributes.setSessionId( manager.stripDotSuffix(id) );
+          this.metadata.setSessionId( manager.stripDotSuffix(id) );
 
           if (manager != null){
               this.attributes.putAll(allAttributes);
+              
+              this.metadata.setCreationTime(creationTime);
+              this.metadata.setLastAccessedTime(lastAccessedTime);
+              this.metadata.setMaxInactiveInterval(maxInactiveInterval);
+              this.metadata.setThisAccessedTime(thisAccessedTime);
+              
               manager.add(this);
           }        
+          
           tellNew();
       }
 
@@ -439,7 +433,7 @@ public class InfinispanStandardSession
                   (sm.getString("standardSession.getLastAccessedTime.ise"));
           }
 
-          return (this.lastAccessedTime);
+          return (this.metadata.getLastAccessedTime());
       }
 
       /**
@@ -447,7 +441,7 @@ public class InfinispanStandardSession
        * @see #getLastAccessedTime().
        */
       public long getLastAccessedTimeInternal() {
-          return (this.lastAccessedTime);
+          return (this.metadata.getLastAccessedTime());
       }
 
       /**
@@ -481,7 +475,7 @@ public class InfinispanStandardSession
        */
       public int getMaxInactiveInterval() {
 
-          return (this.maxInactiveInterval);
+          return (this.metadata.getMaxInactiveInterval());
 
       }
 
@@ -495,7 +489,7 @@ public class InfinispanStandardSession
        */
       public void setMaxInactiveInterval(int interval) {
 
-          this.maxInactiveInterval = interval;
+          this.metadata.setMaxInactiveInterval(interval);
           if (isValid && interval == 0) {
               expire();
           }
@@ -585,7 +579,9 @@ public class InfinispanStandardSession
           if (ACTIVITY_CHECK && accessCount.get() > 0) {
               return true;
           }
-
+          
+          int maxInactiveInterval = this.metadata.getMaxInactiveInterval();
+          long thisAccessedTime = this.metadata.getThisAccessedTime();
           if (maxInactiveInterval >= 0) { 
               long timeNow = System.currentTimeMillis();
               int timeIdle = (int) ((timeNow - thisAccessedTime) / 1000L);
@@ -618,8 +614,8 @@ public class InfinispanStandardSession
        */
       public void access() {
 
-          this.lastAccessedTime = this.thisAccessedTime;
-          this.thisAccessedTime = System.currentTimeMillis();
+          this.metadata.setLastAccessedTime( this.metadata.getThisAccessedTime() );
+          this.metadata.setThisAccessedTime( System.currentTimeMillis() );
           
           if (ACTIVITY_CHECK) {
               accessCount.incrementAndGet();
@@ -762,6 +758,7 @@ public class InfinispanStandardSession
                * session manager's related properties accordingly
                */
               long timeNow = System.currentTimeMillis();
+              long creationTime = this.metadata.getCreationTime();
               int timeAlive = (int) ((timeNow - creationTime)/1000);
               synchronized (manager) {
                   if (timeAlive > manager.getSessionMaxAliveTime()) {
@@ -912,11 +909,11 @@ public class InfinispanStandardSession
           attributes.clear();
           attributes.setSessionId("");
           setAuthType(null);
-          creationTime = 0L;
+          this.metadata.setCreationTime(0L);
           expiring = false;
           id = null;
-          lastAccessedTime = 0L;
-          maxInactiveInterval = -1;
+          this.metadata.setLastAccessedTime(0L);
+          this.metadata.setMaxInactiveInterval(-1);
           notes.clear();
           setPrincipal(null);
           isNew = false;
@@ -990,8 +987,7 @@ public class InfinispanStandardSession
               throw new IllegalStateException
                   (sm.getString("standardSession.getCreationTime.ise"));
 
-          return (this.creationTime);
-
+          return (this.metadata.getCreationTime());
       }
 
 
@@ -1626,6 +1622,122 @@ public class InfinispanStandardSession
       }
   }
   
+  /**
+   * Session metadata distributed attributes.
+   * Separated cache.
+   * 
+   * @author zhenek
+   *
+   */
+class SessionMetaAttributes {
+    /**
+     * The time this session was created, in milliseconds since midnight,
+     * January 1, 1970 GMT.
+     */
+    private static final String CREATION_TIME = "creationTime";
+    
+    /**
+     * The last accessed time for this Session.
+     */
+    private static final String LAST_ACCESSED_TIME = "lastAccessedTime";
+    
+    /**
+     * The current accessed time for this session.
+     */
+    private static final String THIS_ACCESSED_TIME = "thisAccessedTime";
+    
+    /**
+     * The maximum time interval, in seconds, between client requests before the
+     * servlet container may invalidate this session. A negative time indicates
+     * that the session should never time out.
+     */
+    private static final String MAX_INACTIVE_INTERVAL = "maxInactiveInterval";
+    
+    private String sessionId;
+
+    private Cache<String, ?> metadataCache;
+
+    /**
+     * Constructor
+     * 
+     * @param metadataCache
+     * @param sessionId
+     */
+    public SessionMetaAttributes(Cache<String, ?> metadataCache,
+            String sessionId) {
+        this.metadataCache = metadataCache;
+        this.sessionId = sessionId;
+        
+        FineGrainedAtomicMap<String, Object> cacheItem = getCache();
+        cacheItem.put(CREATION_TIME, 0L);
+        cacheItem.put(LAST_ACCESSED_TIME, 0L);
+        cacheItem.put(MAX_INACTIVE_INTERVAL, -1);
+        cacheItem.put(THIS_ACCESSED_TIME, 0L);
+    }
+
+    public long getCreationTime() {
+            return (Long)this.getCache().get( CREATION_TIME );
+        }
+
+    public void setCreationTime(long creationTime) {
+        this.getCache().put( CREATION_TIME, creationTime );
+    }
+
+    public long getLastAccessedTime() {
+        return (Long)this.getCache().get( LAST_ACCESSED_TIME );
+    }
+
+    public void setLastAccessedTime(long lastAccessedTime) {
+        this.getCache().put( LAST_ACCESSED_TIME, lastAccessedTime );
+    }
+
+    public int getMaxInactiveInterval() {
+        return (Integer)this.getCache().get( MAX_INACTIVE_INTERVAL );
+    }
+
+    public void setMaxInactiveInterval(int maxInactiveInterval) {
+        this.getCache().put( MAX_INACTIVE_INTERVAL, maxInactiveInterval );
+    }
+    
+    public long getThisAccessedTime() {
+        return (Long)this.getCache().get( THIS_ACCESSED_TIME );
+    }
+
+    public void setThisAccessedTime(long thisAccessedTime) {
+        this.getCache().put( THIS_ACCESSED_TIME, thisAccessedTime );
+    }
+
+    /**
+     * Get one session metadata
+     * 
+     * @return
+     */
+    private FineGrainedAtomicMap<String, Object> getCache() {
+        FineGrainedAtomicMap<String, Object> cacheItem = 
+                AtomicMapLookup.getFineGrainedAtomicMap(metadataCache, sessionId);
+        return cacheItem;
+    }
+    
+
+    /**
+     * Set session id if changed
+     */
+    public void setSessionId(String id){
+        this.sessionId = id;
+    }
+  
+    public String getSessionId(){
+        return this.sessionId;
+    }
+}
+  
+  /**
+   * User session attributes.
+   * Separated cache to meta attributes
+   * 
+   * @author zhenek
+   *
+   */
   class SessionAttributesCache {
   
     private String sessionId;
