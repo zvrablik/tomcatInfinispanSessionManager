@@ -573,7 +573,7 @@ public class InfinispanSessionManager
      */
     private Configuration createDefaultInfinispanConfiguration(String appName){
         ConfigurationBuilder cb = new ConfigurationBuilder();
-        cb.jmxStatistics();
+        cb.jmxStatistics().enabled( true );
         cb.clustering().cacheMode(CacheMode.DIST_SYNC).l1().disable().lifespan(600000).hash().numOwners(2).rehashRpcTimeout(6000);
         cb.invocationBatching();
         //default config
