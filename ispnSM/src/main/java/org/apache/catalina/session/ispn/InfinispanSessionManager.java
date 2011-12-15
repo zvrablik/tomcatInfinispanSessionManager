@@ -537,9 +537,11 @@ public class InfinispanSessionManager
                  manager = new DefaultCacheManager(configFile.getAbsolutePath());
              }
         } catch (Exception ex) {
-            String message = "Error initializing distributed session cache! ConfigFileName:" + configFile.getAbsolutePath();
-            if ( useDefault ){
+            String message = "Error initializing distributed session cache!";
+            if ( useDefault ) {
                 message += " Used default infinispan configuration.";
+            } else {
+                message += " ConfigFileName:" + configFile.getAbsolutePath();
             }
             //to log root error, lifecycleException doesn't do it
             log.error(message, ex);
@@ -556,9 +558,10 @@ public class InfinispanSessionManager
      */
     private GlobalConfiguration createGlobalDefaultInfinispanConfiguration(String appName){
         GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
-        
-        gcb.transport().clusterName("tomcatSession");
-        gcb.globalJmxStatistics().allowDuplicateDomains(true).jmxDomain("org.infinispan." + appName);
+        gcb.transport().defaultTransport();
+        gcb.transport().clusterName( "tomcatSession" );
+        gcb.globalJmxStatistics().enabled( true )
+           .allowDuplicateDomains( true ).jmxDomain( "defaultIspn_" + appName );
         
         return gcb.build();
     }
