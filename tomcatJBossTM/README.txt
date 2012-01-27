@@ -23,6 +23,7 @@
 #
 
 This is the README file for integration of JBossTS JTA 4.3 and Tomcat 6.
+ZHenek: Updated to work with JBossTS JTA 4.16.0
 
 It outlines how to use JBossTS to provide support for XA transactions to
 web applications running inside Tomcat.
