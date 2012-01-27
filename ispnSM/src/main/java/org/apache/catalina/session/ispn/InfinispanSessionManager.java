@@ -451,6 +451,7 @@ public class InfinispanSessionManager
           //remove leading 
           containerName = containerName.substring(1);
       }
+      containerName = containerName.replace('/', '_');
       
       log.debug("Initialize infinispan cache app: " +  containerName);
       DefaultCacheManager manager = initializeCacheManager( containerName );
@@ -511,7 +512,7 @@ public class InfinispanSessionManager
             String message = "Config file " + configFileName + " doesn't exist.";
             message += "Tested files: " + configFileBase + " and " + configFileHome;
             message += " Used default infinispan configuration instead.";
-            log.error(message);
+            log.info(message);
             useDefault = true;
         }
         
@@ -520,7 +521,7 @@ public class InfinispanSessionManager
                     + " is not file or current tomcat process is not permitted to read this file.";
             message += " Used default infinispan configuration instead.";
             
-            log.error(message);
+            log.info(message);
             useDefault = true;
         }
         
@@ -575,7 +576,7 @@ public class InfinispanSessionManager
         ConfigurationBuilder cb = new ConfigurationBuilder();
         cb.jmxStatistics().enabled( true );
         cb.clustering().cacheMode(CacheMode.DIST_SYNC).l1().disable().lifespan(600000).hash().numOwners(2).rehashRpcTimeout(6000);
-        cb.invocationBatching();
+        cb.invocationBatching().enable();
         //default config
         //cb.name("_session_attr_" + appName);
         

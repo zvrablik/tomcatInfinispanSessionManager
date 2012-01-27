@@ -85,6 +85,7 @@ Application with name example must provide infinispan configuration in file: ses
 Caches are created with name _session_attr_<applicationName> from default values. Configure cache with name _session_attr_testLB
 to specify custom cache configuration of testLB session attributes application. 
 Configure cache with name _session_meta_testLB to specify custom cache configuration of session metadata.
+Slash characters are replaced with underscor characters if used as part of application name. This happens for instance when tomcat application share same http path prefix. http://127.0.0.1:8080/prefix/app1 and http://127.0.0.1:8080/prefix/app2`
 
 Example of sessionInfinispan config file:
 

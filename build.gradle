@@ -11,13 +11,12 @@ subprojects {
     }
 
     repositories {
-        //   flatDir(dirs: "$projectDir/lib")
         mavenRepo(urls: "https://repository.jboss.org/nexus/content/groups/public/")
         mavenCentral()
     }
 
     jar.enabled = true
 	
-    infinispanVersion = '5.1.0.CR1'
+    infinispanVersion = '5.1.0.FINAL'
     tomcatVersion = '6.0.29'
 }
