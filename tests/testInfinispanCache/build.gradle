@@ -1,0 +1,13 @@
+apply plugin: 'java'
+
+dependencies {
+    //infinispan dependencies
+    compile([group: 'org.infinispan', name: 'infinispan-core', version: infinispanVersion]) {
+        artifact {
+            name = "infinispan-core"
+            type = 'jar'
+        }
+    }
+
+    testCompile "junit:junit:4.8.2"
+}
