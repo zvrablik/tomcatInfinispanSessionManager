@@ -11,7 +11,7 @@ subprojects {
     }
 
     repositories {
-        mavenRepo(urls: "https://repository.jboss.org/nexus/content/groups/public/")
+        mavenRepo(url: "https://repository.jboss.org/nexus/content/groups/public/")
         mavenCentral()
     }
 
