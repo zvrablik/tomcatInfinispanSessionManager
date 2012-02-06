@@ -1,3 +1,13 @@
 dependencies {
    testCompile "junit:junit:4.8.2"
 }
+
+jar {
+    manifest {
+        attributes(
+                "Implementation-Title": "build by Gradle:)",
+                "Implementation-Version": version,
+                "Premain-Class": "memoryagent.SizeOfAgent"
+        )
+    }
+}

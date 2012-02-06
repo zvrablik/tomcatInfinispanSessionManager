@@ -44,7 +44,7 @@ public class SessionMemoryCounterServlet extends HttpServlet {
             sessionAttributes.put(attrName, obj); 
         }
         
-        Map<String, Long> sessionMemorySize = ObjectMemoryCounter.getMemorySizePerItem(sessionAttributes);
+        Map<String, Double> sessionMemorySize = ObjectMemoryCounter.getMemorySizePerItem(sessionAttributes, 1024);
         long sumSize = 0;
         
         PrintWriter out = null;
@@ -52,12 +52,12 @@ public class SessionMemoryCounterServlet extends HttpServlet {
             out = this.getOutput(res);
             out.print("<html>");
             out.print("<body>");
-            out.print("Size of session items in bytes");
+            out.print("Size of session items in kB");
             out.print("<br/>");
-            Set<Entry<String, Long>> entrySet = sessionMemorySize.entrySet();
-            for (Entry<String, Long> item : entrySet) {
+            Set<Entry<String, Double>> entrySet = sessionMemorySize.entrySet();
+            for (Entry<String, Double> item : entrySet) {
                 out.print(item.getKey());
-                out.print(": size(MB)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  ");
+                out.print(": size(kB)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  ");
                 out.print(item.getValue().doubleValue());
                 out.print("<br/>");
                 
@@ -66,7 +66,7 @@ public class SessionMemoryCounterServlet extends HttpServlet {
             
             out.print("<br/>");
             out.print("<br/>");
-            out.print("SumSize(MB) :");
+            out.print("SumSize(kB) :");
             out.print(sumSize );
             out.print("<br/>");
             

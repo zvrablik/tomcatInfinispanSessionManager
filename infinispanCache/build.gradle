@@ -3,17 +3,22 @@ dependencies {
     compile 'org.apache.tomcat:catalina:' + tomcatVersion
     compile 'org.apache.tomcat:coyote:' + tomcatVersion
     compile 'org.apache.tomcat:juli:' + tomcatVersion
-    compile 'org.jboss.jbossts:jbossjta:4.16.0.Final'
-    compile 'javax.transaction:jta:1.1'
 
     //infinispan dependencies
     compile([group: 'org.infinispan', name: 'infinispan-core', version: infinispanVersion]) {
-        artifact {
-            name = "infinispan-core"
-            type = 'jar'
-        }
-    }
+      artifact {
+         name = "infinispan-core"
+         type = 'jar'
+      }
+    } 
+
+  testCompile "org.testng:testng:6.1.1"
+  testCompile "com.googlecode.jmockit:jmockit:0.999.11"
 }
 
 test {
+    useTestNG()
+    options{
+	listeners << 'mockit.integration.testng.Initializer'
+	}
 }

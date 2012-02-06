@@ -22,13 +22,19 @@
 package org.jboss.jbossts.tomcat;
 
 import com.arjuna.ats.jdbc.common.jdbcPropertyManager;
+import com.arjuna.ats.jta.common.jtaPropertyManager;
+import org.apache.catalina.LifecycleException;
 import org.apache.catalina.LifecycleListener;
 import org.apache.catalina.LifecycleEvent;
 import com.arjuna.ats.arjuna.coordinator.TransactionReaper;
 import com.arjuna.ats.arjuna.recovery.RecoveryManager;
-//import com.arjuna.ats.jdbc.common.jdbcPropertyManager;
+import org.apache.juli.logging.Log;
+import org.apache.juli.logging.LogFactory;
 
 import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.transaction.TransactionManager;
 import java.util.Hashtable;
 
 /**
@@ -53,6 +59,7 @@ import java.util.Hashtable;
  */
 public class TransactionLifecycleListener implements LifecycleListener
 {
+    protected Log log = LogFactory.getLog(TransactionLifecycleListener.class);
     private static final boolean TERMINATE_NOW = false;
     RecoveryManager recoveryManager;
 
@@ -76,6 +83,16 @@ public class TransactionLifecycleListener implements LifecycleListener
             // so we can safely start the recovery Thread here.
             recoveryManager = RecoveryManager.manager();
             recoveryManager.startRecoveryManagerThread();
+
+//            TransactionManager transactionManager = jtaPropertyManager.getJTAEnvironmentBean().getTransactionManager();
+//            Context initial = null;
+//            String jndiContextName = "java:/TransactionManager";
+//            try {
+//                initial = new InitialContext();
+//                initial.bind( jndiContextName, transactionManager);
+//            } catch (NamingException e) {
+//                log.error("Can't bind transaction manager to JNDI context. Context name:" + jndiContextName, e);
+//            }
         }
         else if ("stop".equals(event.getType()))
         {

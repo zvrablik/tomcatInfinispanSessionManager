@@ -167,19 +167,20 @@ public final class ObjectMemoryCounter {
     /**
      * Create size per item.
      * 
-     * @param size
+     * @param toMeasure
+     * @param denominator
      * @return key, size (in bytes)
      */
-    public static Map<String, Long> getMemorySizePerItem(
-            Map<String, Object> toMeasure) {
+    public static Map<String, Double> getMemorySizePerItem(
+            Map<String, Object> toMeasure, double denominator) {
         Set<Entry<String, Object>> entrySet = toMeasure.entrySet();
 
-        Map<String, Long> sizeValues = new HashMap<String, Long>();
+        Map<String, Double> sizeValues = new HashMap<String, Double>();
 
         for (Entry<String, Object> item : entrySet) {
             long memorySize = ObjectMemoryCounter
                     .getMemorySize(item.getValue());
-            sizeValues.put(item.getKey(), memorySize);
+            sizeValues.put(item.getKey(), memorySize/denominator);
         }
 
         return sizeValues;

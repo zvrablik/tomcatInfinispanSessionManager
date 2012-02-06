@@ -1,12 +1,21 @@
 apply plugin: 'war'
 
 dependencies {
-   providedCompile "javax.servlet:servlet-api:2.5"
+    providedCompile "javax.servlet:servlet-api:2.5"
 	
-   compile project(':memoryAgent')
-   compile 'org.apache.tomcat:juli:' + tomcatVersion
+    providedCompile project(':memoryAgent')
+    providedCompile 'org.apache.tomcat:juli:' + tomcatVersion
+    providedCompile 'javax.transaction:jta:1.1'
 
-   testCompile "junit:junit:4.8.2"
+    //infinispan dependencies
+    providedCompile([group: 'org.infinispan', name: 'infinispan-core', version: infinispanVersion]) {
+        artifact {
+            name = "infinispan-core"
+            type = 'jar'
+        }
+    }
+
+    testCompile "junit:junit:4.8.2"
 }
 
 war {
