@@ -82,11 +82,10 @@ public class SessionServlet extends HttpServlet {
         out.println("<h3>Application attributes:</h3>");
         out.println("<br/>");
         Map<String,String> attrCache = cache.getStoredData();
-        List<String> attrNames = (List<String>)session.getAttribute(CACHE_ATTRIBUTE_NAMES);
+        Set<String> attrNames = (Set<String>)session.getAttribute(CACHE_ATTRIBUTE_NAMES);
 
         if ( attrNames != null ){
-            for (int index = 0; index < attrNames.size(); index++) {
-                String attrName =  attrNames.get(index);
+            for (String attrName : attrNames) {
                 renderOneItem(out, attrCache.get(attrName), attrName);
             }
         }
@@ -97,8 +96,7 @@ public class SessionServlet extends HttpServlet {
         out.println("<br/>");
 
         if ( attrNames != null ){
-            for (int index = 0; index < attrNames.size(); index++) {
-                String attrName =  attrNames.get(index);
+            for (String attrName : attrNames) {
                 String attrValue = TestCacheObj.cache.get( attrName, false );
                 renderOneItem(out, attrValue, attrName);
             }
