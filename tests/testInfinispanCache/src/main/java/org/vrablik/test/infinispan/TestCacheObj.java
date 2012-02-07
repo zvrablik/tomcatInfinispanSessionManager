@@ -85,8 +85,15 @@ public class TestCacheObj {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         System.out.println("testInfinispanCache" + cl);
         System.out.println("testInfinispanCache" + cl.getParent());
-        manager = new DefaultCacheManager( configStream );
-        Cache c =  manager.getCache(cacheName);
-        return new TestCacheObj( c );
+
+        //current classloader is web app classloader
+        Thread.currentThread().setContextClassLoader(cl.getParent());
+        try{
+            manager = new DefaultCacheManager( configStream );
+            Cache c =  manager.getCache(cacheName);
+            return new TestCacheObj( c );
+        } finally {
+            Thread.currentThread().setContextClassLoader( cl );
+        }
     }
 }
