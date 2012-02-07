@@ -57,6 +57,10 @@ public class CacheObj {
      * @throws Exception
      */
     public static CacheObj createCache( String cacheName ) throws Exception {
+        ClassLoader webappClassLoader = Thread.currentThread().getContextClassLoader();
+        System.out.println("testLB " + webappClassLoader);
+        System.out.println("testLB " + webappClassLoader.getParent());
+
         InputStream configStream = CacheObj.class.getResourceAsStream("testLBApp.xml");
         manager = new DefaultCacheManager( configStream );
         Cache cache =  manager.getCache(cacheName);

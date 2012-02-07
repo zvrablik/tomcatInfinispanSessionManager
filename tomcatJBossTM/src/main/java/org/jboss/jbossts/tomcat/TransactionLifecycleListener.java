@@ -70,6 +70,7 @@ public class TransactionLifecycleListener implements LifecycleListener
             // run the reaper here so it is in the server's classloader context
             // if we started it lazily on first tx it would run with context of the webapp using the tx.
             TransactionReaper.instantiate();
+            log.info("TransactionLifecycleListerner - start.");
 
             // recovery needs the correct JNDI settings.
             // XADataSourceWrapper sets these too as a precaution, but we may run first.
@@ -96,6 +97,7 @@ public class TransactionLifecycleListener implements LifecycleListener
         }
         else if ("stop".equals(event.getType()))
         {
+            log.info("TransactionLifecycleListerner - terminated.");
             recoveryManager.terminate( TERMINATE_NOW );
             TransactionReaper.terminate( TERMINATE_NOW );
         }

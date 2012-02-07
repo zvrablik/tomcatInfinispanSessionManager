@@ -25,38 +25,46 @@ public class TomcatTransactionManagerLookup implements TransactionManagerLookup 
 
     private static final Log log = LogFactory.getLog(TomcatTransactionManagerLookup.class);
     
-    private volatile TransactionManager tm;
+    private static TransactionManager tm;
+
+    public TomcatTransactionManagerLookup(){
+        System.out.println("TomcatTransactionManagerLookup instantiated.");
+    }
 
     @Override
     public TransactionManager getTransactionManager() throws Exception {
-    
-        if (tm != null)
-            return tm;
-        
-        try{
-            Context ctx = new InitialContext();
-            try{
-                Object tmObj = ctx.lookup(JNDI_TRANSACTION_MANAGER_NAME);
-                
-                if ( tmObj instanceof TransactionManager){
-                    tm = (TransactionManager)tmObj;
-                }
-            } catch ( Exception e ){
-                //jndi not found
-                log.debug("TransactionManager not found in JNDI context. Context: " + JNDI_TRANSACTION_MANAGER_NAME, e);
-                tm = jtaPropertyManager.getJTAEnvironmentBean().getTransactionManager();
-            }
-            
-        } catch (Exception e){
-            log.error("Failed to get transaction manager. Use dummy transaction manager provided by Infinispan. Don't use dummy transaction manager in production!", e);
-            tm = DummyTransactionManager.getInstance();
-            log.fallingBackToDummyTm();
-        }
+        synchronized ( JNDI_TRANSACTION_MANAGER_NAME ){
+            if (tm == null) {
+                try{
+                    Context ctx = new InitialContext();
+                    try{
+                        Object tmObj = ctx.lookup(JNDI_TRANSACTION_MANAGER_NAME);
 
-        if ( tm == null ){
-            log.error("Transaction manager is null. Use dummy transaction manager provided by Infinispan. Don't use dummy transaction manager in production!");
-            tm = DummyTransactionManager.getInstance();
-            log.fallingBackToDummyTm();
+                        if ( tmObj instanceof TransactionManager){
+                            tm = (TransactionManager)tmObj;
+                        }
+                    } catch ( Exception e ){
+                        //jndi not found
+                        log.debug("TransactionManager not found in JNDI context. Context: " + JNDI_TRANSACTION_MANAGER_NAME, e);
+                        tm = jtaPropertyManager.getJTAEnvironmentBean().getTransactionManager();
+
+                        if ( tm != null ){
+                            log.debug("TransactionManager initialized through jtaPropertyManager.");
+                        }
+                    }
+
+                } catch (Exception e){
+                    log.error("Failed to get transaction manager. Use dummy transaction manager provided by Infinispan. Don't use dummy transaction manager in production!", e);
+                    tm = DummyTransactionManager.getInstance();
+                    log.fallingBackToDummyTm();
+                }
+
+                if ( tm == null ){
+                    log.error("Transaction manager is null. Use dummy transaction manager provided by Infinispan. Don't use dummy transaction manager in production!");
+                    tm = DummyTransactionManager.getInstance();
+                    log.fallingBackToDummyTm();
+                }
+            }
         }
         
         return tm;

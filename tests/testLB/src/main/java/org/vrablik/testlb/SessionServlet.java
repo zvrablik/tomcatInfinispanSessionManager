@@ -1,15 +1,12 @@
 package org.vrablik.testlb;
 
+import org.vrablik.test.infinispan.TestCacheObj;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -21,8 +18,6 @@ import javax.servlet.http.HttpSession;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 
-
-import org.vrablik.testlb.CacheObj;
 
 /**
  * Session content with requests log
@@ -82,6 +77,7 @@ public class SessionServlet extends HttpServlet {
         
         renderOneItem(out, session.getAttribute(REQUEST_LOG_NAME), REQUEST_LOG_NAME);
         
+        // attributes stored in cache created in application
         out.println("<br/>");
         out.println("<h3>Application attributes:</h3>");
         out.println("<br/>");
@@ -92,6 +88,19 @@ public class SessionServlet extends HttpServlet {
             for (int index = 0; index < attrNames.size(); index++) {
                 String attrName =  attrNames.get(index);
                 renderOneItem(out, attrCache.get(attrName), attrName);
+            }
+        }
+
+        //cache class stored in common classloader (lib directory)
+        out.println("<br/>");
+        out.println("<h3>Application(jar in lib directory) attributes:</h3>");
+        out.println("<br/>");
+
+        if ( attrNames != null ){
+            for (int index = 0; index < attrNames.size(); index++) {
+                String attrName =  attrNames.get(index);
+                String attrValue = TestCacheObj.cache.get( attrName, false );
+                renderOneItem(out, attrValue, attrName);
             }
         }
                 
@@ -213,11 +222,13 @@ public class SessionServlet extends HttpServlet {
         }
 
         try{
-            List<String> attrNames = (List<String>)session.getAttribute(CACHE_ATTRIBUTE_NAMES);
+            transaction.begin();
+
+            Set<String> attrNames = (Set<String>)session.getAttribute(CACHE_ATTRIBUTE_NAMES);
             if ( attrNames != null ){
-                attrNames = new ArrayList<String>( attrNames );
+                attrNames = new HashSet<String>( attrNames );
             } else {
-                attrNames = new ArrayList<String>();
+                attrNames = new HashSet<String>();
             }
 
 
@@ -226,9 +237,10 @@ public class SessionServlet extends HttpServlet {
             session.setAttribute(CACHE_ATTRIBUTE_NAMES, attrNames);
 
             //test begin transaction here
-            transaction.begin();
+            //transaction.begin();
 
             cache.set(key, value, throwException);
+            TestCacheObj.cache.set(key, "TestCacheObj" + value, throwException);
             
             transaction.commit();
         } catch (Exception e) {
