@@ -1,5 +1,6 @@
 package org.vrablik.testlb;
 
+import org.vrablik.test.database.TestDbOracle;
 import org.vrablik.test.infinispan.TestCacheObj;
 
 import java.io.IOException;
@@ -35,6 +36,8 @@ public class SessionServlet extends HttpServlet {
      * another distributed cache to be used independently on session distributed cache
      */
     public static CacheObj cache;
+    
+    public static TestDbOracle dbOracle;
 
     static {
         try {
@@ -42,6 +45,13 @@ public class SessionServlet extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();  
             cache = null;
+        }
+        
+        try{
+          dbOracle = new TestDbOracle();
+        } catch (Exception e) {
+            e.printStackTrace();
+            dbOracle = null;
         }
     }
 
@@ -237,9 +247,10 @@ public class SessionServlet extends HttpServlet {
             //test begin transaction here
             //transaction.begin();
 
-            cache.set(key, value, throwException);
+            dbOracle.set(key, value, false);
+            cache.set(key, value, false);
             TestCacheObj.cache.set(key, "TestCacheObj" + value, throwException);
-            
+
             transaction.commit();
         } catch (Exception e) {
             try {

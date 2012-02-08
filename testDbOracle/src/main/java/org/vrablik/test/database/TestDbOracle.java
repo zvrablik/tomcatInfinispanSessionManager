@@ -37,8 +37,8 @@ public class TestDbOracle {
         Connection con = null;
         PreparedStatement ps = null;
         try {
-            con = this.getConnection("sqlPool");
-            String sql = "insert into tesjtat values ( ?, ?, ?)";
+            con = this.getConnection("sqlPool2");
+            String sql = "insert into testjta values ( ?, ?, ?)";
             ps = con.prepareStatement(sql);
             ps.setInt(1, counter.getAndIncrement());
             ps.setString(2, key);
