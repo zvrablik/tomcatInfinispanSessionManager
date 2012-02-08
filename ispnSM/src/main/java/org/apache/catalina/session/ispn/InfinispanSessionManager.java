@@ -5,6 +5,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -235,7 +236,7 @@ public class InfinispanSessionManager
      * The PersistentManager manager does not need to create session data
      * because it reads it from the Store.
      * 
-     * @param cache       attributes cache
+     * @param sessionId
      */
     @Override
     Session createEmptySession(String sessionId) {
@@ -560,7 +561,11 @@ public class InfinispanSessionManager
     private GlobalConfiguration createGlobalDefaultInfinispanConfiguration(String appName){
         GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
         gcb.transport().defaultTransport();
-        gcb.transport().clusterName( "tomcatSession" );
+        if (appName == null || appName.length() == 0){
+            int i = new Random().nextInt(1000);
+            appName = String.valueOf( i );
+        }
+        gcb.transport().clusterName( "tomcatSession_" + appName );
         gcb.globalJmxStatistics().enabled( true )
            .allowDuplicateDomains( true ).jmxDomain( "defaultIspn_" + appName );
         
