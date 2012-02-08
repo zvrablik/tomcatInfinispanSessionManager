@@ -3,7 +3,7 @@ dependencies {
     compile 'org.apache.tomcat:catalina:' + tomcatVersion
     compile 'org.apache.tomcat:coyote:' + tomcatVersion
     compile 'org.apache.tomcat:juli:' + tomcatVersion
-    compile 'org.jboss.jbossts:jbossjta:4.16.0.Final'
+    compile 'org.jboss.jbossts:jbossjta:' + jbossTSVersion
     compile 'javax.transaction:jta:1.1'
 
     //infinispan dependencies

@@ -17,6 +17,7 @@ subprojects {
 
     jar.enabled = true
 	
-    infinispanVersion = '5.1.0.FINAL'
+    infinispanVersion = '5.1.1.FINAL'
+    jbossTSVersion = '4.16.2.Final'
     tomcatVersion = '6.0.29'
 }
