@@ -1,4 +1,0 @@
-test projects
-
-testLB - war to test session manager, JTA with multiple caches(multiple classloaders) and multiple databases
-testInfinispanCache - to be able to initialize cache in different classloader than web application

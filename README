@@ -34,5 +34,8 @@ testLB
   - compute session memory consumption with JAVA_OPTS="$JAVA_OPTS -javaagent:./lib/memoryAgent-prototype.jar "
   - without javaagent performed session memory consumption estimation 
 
+testLB - war to test session manager, JTA with multiple caches(multiple classloaders) and multiple databases
+testInfinispanCache - to be able to initialize cache in different classloader than web application
+
 TODO:
   - JMeter load tests or any other 
