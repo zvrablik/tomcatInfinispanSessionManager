@@ -5,6 +5,7 @@ dependencies {
 	
     providedCompile project(':memoryAgent')
     providedCompile project(':tests/testInfinispanCache')
+    providedCompile project(':tests/testDbOracle')
     providedCompile 'org.apache.tomcat:juli:' + tomcatVersion
     providedCompile 'javax.transaction:jta:1.1'
 
