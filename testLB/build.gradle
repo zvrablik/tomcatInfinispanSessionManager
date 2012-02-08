@@ -4,8 +4,8 @@ dependencies {
     providedCompile "javax.servlet:servlet-api:2.5"
 	
     providedCompile project(':memoryAgent')
-    providedCompile project(':tests/testInfinispanCache')
-    providedCompile project(':tests/testDbOracle')
+    providedCompile project(':testInfinispanCache')
+    providedCompile project(':testDbOracle')
     providedCompile 'org.apache.tomcat:juli:' + tomcatVersion
     providedCompile 'javax.transaction:jta:1.1'
 
