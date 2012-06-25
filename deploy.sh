@@ -1,8 +1,9 @@
 #!/bin/bash
 echo "deploy sessionManager"
 DEV_PATH=~/devel/myProjects/tomcatInfinispanSessionManager
+SUFFIX="HEAD"$1
 #TOMCAT_PATH=/home/zvrablik/ismart/testLBTomcat
-TOMCAT_PATH=/home/zvrablik/ismart/ismartHEAD
+TOMCAT_PATH=~/ismart/ismart$SUFFIX
 
 echo "devPath: $DEV_PATH"
 echo "tomcatPath: $TOMCAT_PATH"
