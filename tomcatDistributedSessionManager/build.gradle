@@ -1,8 +1,8 @@
 dependencies {
     //tomcat dependencies
-    compile 'org.apache.tomcat:catalina:' + tomcatVersion
-    compile 'org.apache.tomcat:coyote:' + tomcatVersion
-    compile 'org.apache.tomcat:juli:' + tomcatVersion
+    compile 'org.apache.tomcat:tomcat-catalina:' + tomcatSevenVersion
+    compile 'org.apache.tomcat:tomcat-coyote:' + tomcatSevenVersion
+    compile 'org.apache.tomcat:tomcat-juli:' + tomcatSevenVersion
 
     //infinispan dependencies
     compile([group: 'org.infinispan', name: 'infinispan-core', version: infinispanVersion]) {

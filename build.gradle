@@ -1,6 +1,6 @@
 subprojects {
-    group = 'org.vrablik.tc.ispn'
-    version = 'prototype'
+    group = 'apache-tomcat-distributedSessionManager'
+    version = '1.0-SNAPSHOT'
 
     apply plugin: 'java'
     apply plugin: 'eclipse'
@@ -11,6 +11,7 @@ subprojects {
     }
 
     repositories {
+        mavenRepo(url: "http://repo2.maven.org/maven2")
         mavenRepo(url: "https://repository.jboss.org/nexus/content/groups/public/")
         mavenCentral()
     }
@@ -20,4 +21,5 @@ subprojects {
     infinispanVersion = '5.1.5.FINAL'
     jbossTSVersion = '4.16.2.Final'
     tomcatVersion = '6.0.29'
+    tomcatSevenVersion = '7.0.28'
 }
