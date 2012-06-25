@@ -1300,9 +1300,13 @@ public class InfinispanStandardSession
               throw new IllegalStateException
                   (sm.getString("standardSession.setAttribute.ise"));
           if ((manager != null) && manager.getDistributable() &&
-            !(value instanceof Serializable))
-              throw new IllegalArgumentException
-                  (sm.getString("standardSession.setAttribute.iae", name));
+            !(value instanceof Serializable)){
+              String msg = sm.getString("standardSession.setAttribute.iae", name);
+              if ( value != null){
+                msg += " Class name: " + value.getClass().getName();
+              }
+              throw new IllegalArgumentException( msg );
+          }
           // Construct an event with the new value
           HttpSessionBindingEvent event = null;
 
@@ -1816,7 +1820,7 @@ class SessionMetaAttributes {
      * get attributes reference to distributed cache
      */
     private FineGrainedAtomicMap<String, Object> getCachedAttributes() {
-        //use atomoc map to store one session attributes. 
+        //use atomic map to store one session attributes.
         //doesn't use distributed transaction, use <invocationBatching enabled="true"/> in _session_attr named cache
        FineGrainedAtomicMap<String, Object> attributes = AtomicMapLookup.getFineGrainedAtomicMap(attributesCache, sessionId);
         
