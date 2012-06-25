@@ -1,3 +1,4 @@
+include "tomcatDistributedSessionManager"
 include "ispnSM"
 include "memoryAgent"
 include "tomcatJBossTM"
