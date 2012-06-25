@@ -28,8 +28,10 @@ import javax.naming.Context;
 import java.sql.SQLException;
 import java.sql.Connection;
 import java.io.PrintWriter;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.Hashtable;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 import com.arjuna.ats.jdbc.TransactionalDriver;
 import com.arjuna.ats.jdbc.common.jdbcPropertyManager;
@@ -233,5 +235,9 @@ public class XADataSourceWrapper implements XADataSource, DataSource
     public int getLoginTimeout() throws SQLException
     {
         return _theXADataSource.getLoginTimeout();
+    }
+
+    public Logger getParentLogger() throws SQLFeatureNotSupportedException{
+        throw new SQLFeatureNotSupportedException();
     }
 }
