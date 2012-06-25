@@ -45,7 +45,7 @@ public class TomcatTransactionManagerLookup implements TransactionManagerLookup 
                         }
                     } catch ( Exception e ){
                         //jndi not found
-                        log.debug("TransactionManager not found in JNDI context. Context: " + JNDI_TRANSACTION_MANAGER_NAME, e);
+                        log.debug("TransactionManager not found in JNDI context. Context: " + JNDI_TRANSACTION_MANAGER_NAME);
                         tm = jtaPropertyManager.getJTAEnvironmentBean().getTransactionManager();
 
                         if ( tm != null ){
