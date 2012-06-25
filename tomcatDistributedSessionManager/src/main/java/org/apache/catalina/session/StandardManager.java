@@ -32,6 +32,8 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.ServletContext;
 
@@ -63,6 +65,12 @@ import org.apache.tomcat.util.ExceptionUtils;
 public class StandardManager extends ManagerBase {
 
     private final Log log = LogFactory.getLog(StandardManager.class); // must not be static
+
+    /**
+     * The set of currently active Sessions for this Manager, keyed by
+     * session identifier.
+     */
+    protected Map<String, Session> sessions = new ConcurrentHashMap<String, Session>();
 
     // ---------------------------------------------------- Security Classes
     private class PrivilegedDoLoad
@@ -545,6 +553,13 @@ public class StandardManager extends ManagerBase {
 
     // ------------------------------------------------------ Protected Methods
 
+    /**
+     * Get sessions
+     * @return
+     */
+    protected Map<String, Session> getSessions(){
+        return this.sessions;
+    }
 
     /**
      * Return a File object representing the pathname to our

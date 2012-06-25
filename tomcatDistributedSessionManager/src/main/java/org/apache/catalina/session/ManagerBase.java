@@ -23,6 +23,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
+import java.lang.String;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Deque;
@@ -155,13 +156,6 @@ public abstract class ManagerBase extends LifecycleMBeanBase
      * Number of sessions that have expired.
      */
     protected final AtomicLong expiredSessions = new AtomicLong(0);
-
-
-    /**
-     * The set of currently active Sessions for this Manager, keyed by
-     * session identifier.
-     */
-    protected Map<String, Session> sessions = new ConcurrentHashMap<String, Session>();
 
     // Number of sessions created by this manager
     protected long sessionCounter=0;
@@ -508,6 +502,11 @@ public abstract class ManagerBase extends LifecycleMBeanBase
     }
     // --------------------------------------------------------- Public Methods
 
+    /**
+     * Get sessions local store
+     * @return
+     */
+    protected abstract Map<String, Session> getSessions();
 
     /**
      * Implements the Manager interface, direct call to processExpires
@@ -590,7 +589,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
      */
     @Override
     public void add(Session session) {
-
+        Map<String, Session> sessions = this.getSessions();
         sessions.put(session.getIdInternal(), session);
         int size = getActiveSessions();
         if( size > maxActive ) {
@@ -689,7 +688,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
      */
     @Override
     public Session findSession(String id) throws IOException {
-
+        Map<String, Session> sessions = this.getSessions();
         if (id == null)
             return (null);
         return sessions.get(id);
@@ -703,7 +702,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
      */
     @Override
     public Session[] findSessions() {
-
+        Map<String, Session> sessions = this.getSessions();
         return sessions.values().toArray(new Session[0]);
 
     }
@@ -744,6 +743,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
         }
 
         if (session.getIdInternal() != null) {
+            Map<String, Session> sessions = this.getSessions();
             sessions.remove(session.getIdInternal());
         }
     }
@@ -793,7 +793,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
      * Generate and return a new session identifier.
      */
     protected String generateSessionId() {
-
+        Map<String, Session> sessions = this.getSessions();
         String result = null;
 
         do {
@@ -884,6 +884,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
      */
     @Override
     public int getActiveSessions() {
+        Map<String, Session> sessions = this.getSessions();
         return sessions.size();
     }
 
@@ -1109,6 +1110,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
      */
     public String listSessionIds() {
         StringBuilder sb=new StringBuilder();
+        Map<String, Session> sessions = this.getSessions();
         Iterator<String> keys = sessions.keySet().iterator();
         while (keys.hasNext()) {
             sb.append(keys.next()).append(" ");
@@ -1125,6 +1127,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
      * @return The attribute value, if found, null otherwise
      */
     public String getSessionAttribute( String sessionId, String key ) {
+        Map<String, Session> sessions = this.getSessions();
         Session s = sessions.get(sessionId);
         if( s==null ) {
             if(log.isInfoEnabled())
@@ -1150,6 +1153,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
      * specified id exists, or if the session does not have any attributes
      */
     public HashMap<String, String> getSession(String sessionId) {
+        Map<String, Session> sessions = this.getSessions();
         Session s = sessions.get(sessionId);
         if (s == null) {
             if (log.isInfoEnabled()) {
@@ -1174,6 +1178,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
 
 
     public void expireSession( String sessionId ) {
+        Map<String, Session> sessions = this.getSessions();
         Session s=sessions.get(sessionId);
         if( s==null ) {
             if(log.isInfoEnabled())
@@ -1184,6 +1189,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
     }
 
     public long getThisAccessedTimestamp( String sessionId ) {
+        Map<String, Session> sessions = this.getSessions();
         Session s=sessions.get(sessionId);
         if(s== null)
             return -1 ;
@@ -1191,6 +1197,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
     }
 
     public String getThisAccessedTime( String sessionId ) {
+        Map<String, Session> sessions = this.getSessions();
         Session s=sessions.get(sessionId);
         if( s==null ) {
             if(log.isInfoEnabled())
@@ -1201,6 +1208,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
     }
 
     public long getLastAccessedTimestamp( String sessionId ) {
+        Map<String, Session> sessions = this.getSessions();
         Session s=sessions.get(sessionId);
         if(s== null)
             return -1 ;
@@ -1208,6 +1216,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
     }
 
     public String getLastAccessedTime( String sessionId ) {
+        Map<String, Session> sessions = this.getSessions();
         Session s=sessions.get(sessionId);
         if( s==null ) {
             if(log.isInfoEnabled())
@@ -1218,6 +1227,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
     }
 
     public String getCreationTime( String sessionId ) {
+        Map<String, Session> sessions = this.getSessions();
         Session s=sessions.get(sessionId);
         if( s==null ) {
             if(log.isInfoEnabled())
@@ -1228,6 +1238,7 @@ public abstract class ManagerBase extends LifecycleMBeanBase
     }
 
     public long getCreationTimestamp( String sessionId ) {
+        Map<String, Session> sessions = this.getSessions();
         Session s=sessions.get(sessionId);
         if(s== null)
             return -1 ;
