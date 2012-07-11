@@ -1,10 +1,17 @@
 package org.vrablik.testlb;
 
+import org.vrablik.test.database.TestDbOracle;
+import org.vrablik.test.infinispan.TestCacheObj;
+
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetAddress;
@@ -13,8 +20,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -22,13 +31,36 @@ import java.util.Map;
  * @author zhenek
  *
  */
-public class SessionServlet extends HttpServlet {
+public class TransactionalSessionServlet extends HttpServlet {
   public static final String REQUEST_LOG_NAME = "requestLog";
 
     /**
      * session key of attribute names
      */
     private static final String CACHE_ATTRIBUTE_NAMES = "CACHE_ATTRIBUTE_NAMES";
+    /**
+     * another distributed cache to be used independently on session distributed cache
+     */
+    public static CacheObj cache;
+    
+    public static TestDbOracle dbOracle;
+
+    static {
+        try {
+            cache = CacheObj.createCache("testLBAppCache1");
+        } catch (Exception e) {
+            e.printStackTrace();  
+            cache = null;
+        }
+        
+        try{
+          dbOracle = new TestDbOracle();
+        } catch (Exception e) {
+            e.printStackTrace();
+            dbOracle = null;
+        }
+    }
+
 
     public void doGet (HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
         PrintWriter out = getOutput(res);
@@ -61,6 +93,31 @@ public class SessionServlet extends HttpServlet {
         
         renderOneItem(out, session.getAttribute(REQUEST_LOG_NAME), REQUEST_LOG_NAME);
         
+        // attributes stored in cache created in application
+        out.println("<br/>");
+        out.println("<h3>Application attributes:</h3>");
+        out.println("<br/>");
+        Map<String,String> attrCache = cache.getStoredData();
+        Set<String> attrNames = (Set<String>)session.getAttribute(CACHE_ATTRIBUTE_NAMES);
+
+        if ( attrNames != null ){
+            for (String attrName : attrNames) {
+                renderOneItem(out, attrCache.get(attrName), attrName);
+            }
+        }
+
+        //cache class stored in common classloader (lib directory)
+        out.println("<br/>");
+        out.println("<h3>Application(jar in lib directory) attributes:</h3>");
+        out.println("<br/>");
+
+        if ( attrNames != null ){
+            for (String attrName : attrNames) {
+                String attrValue = TestCacheObj.cache.get( attrName, false );
+                renderOneItem(out, attrValue, attrName);
+            }
+        }
+                
         out.print("</body>");
         out.print("</html>");
         
@@ -124,6 +181,16 @@ public class SessionServlet extends HttpServlet {
             String mii = request.getParameter("mii");
             session.setMaxInactiveInterval( Integer.valueOf( mii ) );
             message += " Max inactive interval set to (seconds): " + mii;
+        } else if ("setCacheValueOK".equals(action)) {
+            boolean throwException = false;
+            setCacheValue(request, session, throwException);
+        } else if ("setCacheValueERR".equals(action)) {
+            boolean throwException = true;
+            setCacheValue(request, session, throwException);
+        } else if ("getCacheValue".equals(action)) {
+            String key = request.getParameter("key");
+            String value = cache.getStoredData().get(key);
+            message += " key: " + key + " value: " + value;
         } else {
             message = "Action is not recognized";
         }
@@ -148,6 +215,56 @@ public class SessionServlet extends HttpServlet {
             if (out != null) {
                 out.close();
             }
+        }
+    }
+
+    /**
+     * Set cache value to distirbuted cache and add cache name to session CACHE_ATTRIBUTE_NAMES
+     * @param request
+     * @param session
+     * @param throwException
+     */
+    private void setCacheValue(HttpServletRequest request, HttpSession session, boolean throwException) throws RuntimeException {
+        String key = request.getParameter("key");
+        String value = request.getParameter("value");
+
+        UserTransaction transaction = null;
+        try {
+            transaction = this.getTransaction();
+        } catch (NamingException e) {
+            throw new RuntimeException( e );
+        }
+
+        try{
+            transaction.begin();
+
+            Set<String> attrNames = (Set<String>)session.getAttribute(CACHE_ATTRIBUTE_NAMES);
+            if ( attrNames != null ){
+                attrNames = new HashSet<String>( attrNames );
+            } else {
+                attrNames = new HashSet<String>();
+            }
+
+
+            attrNames.add(key);
+
+            session.setAttribute(CACHE_ATTRIBUTE_NAMES, attrNames);
+
+            //test begin transaction here
+            //transaction.begin();
+
+            dbOracle.set(key, value, false);
+            cache.set(key, value, false);
+            TestCacheObj.cache.set(key, "TestCacheObj" + value, throwException);
+
+            transaction.commit();
+        } catch (Exception e) {
+            try {
+                transaction.rollback();
+            } catch (SystemException e1) {
+                throw new RuntimeException( e );
+            }
+            throw new RuntimeException( e );
         }
     }
 
@@ -189,6 +306,24 @@ public class SessionServlet extends HttpServlet {
       res.setContentType("text/html");
       PrintWriter out = res.getWriter();
       return out;
+    }
+    
+    private UserTransaction getTransaction() throws NamingException {
+        
+        InitialContext ctx = null;
+        UserTransaction tt;
+        try{
+            ctx = new InitialContext();
+            tt = (UserTransaction) ctx.lookup( "java:comp/UserTransaction" );
+        } catch (Exception e ){
+            throw new RuntimeException(e);
+        } finally {
+            if ( ctx != null ){
+                ctx.close();
+            }
+        }
+        
+        return tt;
     }
 }
 
