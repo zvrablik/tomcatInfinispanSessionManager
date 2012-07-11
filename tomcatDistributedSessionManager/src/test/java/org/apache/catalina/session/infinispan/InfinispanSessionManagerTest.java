@@ -1,13 +1,19 @@
-package org.apache.catalina.session.ispn;
+package org.apache.catalina.session.infinispan;
 
 
-import org.testng.annotations.Test;
-import org.testng.annotations.BeforeMethod;
-import org.testng.AssertJUnit;
 import mockit.Expectations;
 import mockit.Mocked;
-
 import org.apache.catalina.Engine;
+import org.apache.catalina.LifecycleException;
+import org.apache.catalina.Session;
+import org.apache.catalina.session.StandardSession;
+import org.testng.annotations.BeforeMethod;
+
+import static org.testng.AssertJUnit.*;
+
+import org.testng.annotations.Test;
+
+import java.io.IOException;
 
 public class InfinispanSessionManagerTest {
 
@@ -26,7 +32,7 @@ public class InfinispanSessionManagerTest {
         InfinispanSessionManager ispnSM = new InfinispanSessionManager();
         String sessionId = null;
         String newSessionId = ispnSM.stripJvmRoute(sessionId);
-        AssertJUnit.assertNull(newSessionId);
+        assertNull(newSessionId);
     }
      
     /**
@@ -48,7 +54,7 @@ public class InfinispanSessionManagerTest {
         
         String sessionId = "testtest.tc1";
         String newSessionId = ispnSM.stripJvmRoute(sessionId);
-        AssertJUnit.assertEquals("testtest", newSessionId);
+        assertEquals("testtest", newSessionId);
     }
     
     /**
@@ -71,7 +77,7 @@ public class InfinispanSessionManagerTest {
         
         String sessionId = "testtest.tc1";
         String newSessionId = ispnSM.stripJvmRoute(sessionId);
-        AssertJUnit.assertEquals("testtest.tc1", newSessionId);
+        assertEquals("testtest.tc1", newSessionId);
     }
     
     /**
@@ -93,7 +99,7 @@ public class InfinispanSessionManagerTest {
         
         String sessionId = "testtest";
         String newSessionId = ispnSM.stripJvmRoute(sessionId);
-        AssertJUnit.assertEquals("testtest", newSessionId);
+        assertEquals("testtest", newSessionId);
     }
     
     /**
@@ -113,6 +119,72 @@ public class InfinispanSessionManagerTest {
         
         String sessionId = "testtest1.bla";
         String newSessionId = ispnSM.stripDotSuffix(sessionId);
-        AssertJUnit.assertEquals("testtest1", newSessionId);
+        assertEquals("testtest1", newSessionId);
+    }
+
+
+    /**
+     * test initialize one session manager
+     * @throws LifecycleException
+     */
+    @Test
+    public void testInitSessionManager() throws LifecycleException {
+
+        InfinispanSessionManager initializedManager = createSessionManager("zzz");
+
+        Session session = initializedManager.createEmptySession();
+
+        assertTrue(session instanceof StandardSession);
+    }
+
+    /**
+     * Create three session managers
+     * @throws LifecycleException
+     */
+    @Test
+    public void testInitSessionManagers() throws  LifecycleException{
+        InfinispanSessionManager managerOne = createSessionManager("zzz");
+        InfinispanSessionManager managerTwo = createSessionManager("zzz");
+        InfinispanSessionManager managerThree = createSessionManager("zzz");
+
+        assertEquals("tc_session_contextNamezzz", managerOne.getCacheName());
+        assertEquals("tc_session_contextNamezzz", managerTwo.getCacheName());
+        assertEquals("tc_session_contextNamezzz", managerThree.getCacheName());
+    }
+
+    /**
+     * test creating adding and removing sessions
+     * @throws LifecycleException
+     */
+    @Test
+    public void testCreateSetGetSessionManager() throws LifecycleException, IOException {
+
+        InfinispanSessionManager manager = createSessionManager("zzz");
+
+        Session session = manager.createSession(null);
+        assertTrue( session instanceof InfinispanSession);
+
+        assertNotNull(session.getId());
+        manager.add(session);
+        String sessionId = session.getId();
+        Session rsession = manager.findSession(sessionId);
+        assertEquals(sessionId, rsession.getId());
+
+        Session[] sessions = manager.findSessions();
+        assertEquals(1, sessions.length);
+
+        manager.remove(rsession);
+
+        sessions = manager.findSessions();
+        assertEquals(0, sessions.length);
+    }
+
+    /**
+     * Create session manager to use in
+     * @return
+     * @throws LifecycleException
+     */
+    protected InfinispanSessionManager createSessionManager(String nameSuffix) throws LifecycleException {
+        return InfinispanSessionManagerCommon.getInitializedManager(nameSuffix);
     }
 }

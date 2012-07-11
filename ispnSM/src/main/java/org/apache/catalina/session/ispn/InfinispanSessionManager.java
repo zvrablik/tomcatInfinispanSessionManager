@@ -253,7 +253,7 @@ public class InfinispanSessionManager
 
     
     /* (non-Javadoc)
-     * @see org.apache.catalina.session.ispn.InfinispanSessionManagerBase#stripJvmRoute(java.lang.String)
+     * @see InfinispanSessionManagerBase#stripJvmRoute(java.lang.String)
      */
     @Override
     protected String stripJvmRoute(String sessionId){
@@ -297,7 +297,7 @@ public class InfinispanSessionManager
     
 
     /* (non-Javadoc)
-     * @see org.apache.catalina.session.ispn.InfinispanSessionManagerBase#getSessionFromCache(java.lang.String)
+     * @see InfinispanSessionManagerBase#getSessionFromCache(java.lang.String)
      */
     @Override
     protected Session createSessionFromCache(String sessionId) {
@@ -305,7 +305,7 @@ public class InfinispanSessionManager
         if (existsSessionId(sessionId) ) {
             session = this.createSession(sessionId);
             //set local session to cache session object on given node
-            //session is removed from all nodes through ispn event
+            //session is removed from all nodes through infinispan event
             localSessions.put(sessionId, session);
         }
         

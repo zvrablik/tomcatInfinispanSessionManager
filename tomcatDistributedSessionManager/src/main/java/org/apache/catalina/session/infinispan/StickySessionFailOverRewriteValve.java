@@ -1,4 +1,4 @@
-package org.apache.catalina.session.ispn;
+package org.apache.catalina.session.infinispan;
 
 import java.io.IOException;
 
@@ -6,16 +6,13 @@ import javax.servlet.ServletException;
 
 import org.apache.catalina.Container;
 import org.apache.catalina.Engine;
-import org.apache.catalina.Lifecycle;
 import org.apache.catalina.LifecycleException;
-import org.apache.catalina.LifecycleListener;
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
-import org.apache.catalina.util.LifecycleSupport;
 import org.apache.catalina.valves.ValveBase;
 
-public class StickySessionFailOverRewriteValve extends ValveBase implements Lifecycle{
-    
+public class StickySessionFailOverRewriteValve extends ValveBase {
+
     /**
      * logger
      */
@@ -28,13 +25,6 @@ public class StickySessionFailOverRewriteValve extends ValveBase implements Life
     protected static final String info = "StickySessionFailOverRewriteValve/1.0";
     
     /**
-     * The lifecycle event support for this component.
-     */
-    protected LifecycleSupport lifecycle = new LifecycleSupport(this);
-    
-    private volatile boolean started = false;
-    
-    /**
      * Return descriptive information about this implementation.
      */
     public String getInfo() {
@@ -42,7 +32,14 @@ public class StickySessionFailOverRewriteValve extends ValveBase implements Life
         return (info);
 
     }
-    
+
+    /**
+     * Invoke session id rewrite if needed
+     * @param request
+     * @param response
+     * @throws IOException
+     * @throws ServletException
+     */
     public void invoke(Request request, Response response) throws IOException, ServletException {
         String localJvmRoute = this.getJvmRoute();
         String requestSessionId = request.getRequestedSessionId();
@@ -105,85 +102,34 @@ public class StickySessionFailOverRewriteValve extends ValveBase implements Life
         return e == null ? null : e.getJvmRoute();
     }
 
-    /**
-     * Add a lifecycle event listener to this component.
-     * 
-     * @param listener
-     *            The listener to add
-     */
-    public void addLifecycleListener(LifecycleListener listener) {
-
-        lifecycle.addLifecycleListener(listener);
-
-    }
 
     /**
-     * Get the lifecycle listeners associated with this lifecycle. If this
-     * Lifecycle has no listeners registered, a zero-length array is returned.
-     */
-    public LifecycleListener[] findLifecycleListeners() {
-
-        return lifecycle.findLifecycleListeners();
-
-    }
-
-    /**
-     * Remove a lifecycle event listener from this component.
-     * 
-     * @param listener
-     *            The listener to add
-     */
-    public void removeLifecycleListener(LifecycleListener listener) {
-
-        lifecycle.removeLifecycleListener(listener);
-
-    }
-
-    /**
-     * Prepare for the beginning of active use of the public methods of this
-     * component. This method should be called after <code>configure()</code>,
-     * and before any of the public methods of the component are utilized.
-     * 
+     * log valve started
      * @exception LifecycleException
      *                if this component detects a fatal error that prevents this
      *                component from being used
      */
-    public void start() throws LifecycleException {
+    public void startInternal() throws LifecycleException {
 
-        // Validate and update our current component state
-        if (started)
-            throw new LifecycleException("StickySession failover rewite valve is already started.");
-        
-        lifecycle.fireLifecycleEvent(START_EVENT, null);
-        
-        started = true;
-        
+        super.startInternal();
+
         if (log.isInfoEnabled()) {
             log.info(info + " started.");
         }
     }
 
     /**
-     * Gracefully terminate the active use of the public methods of this
-     * component. This method should be the last one called on a given instance
-     * of this component.
-     * 
+     * log valve stopped
      * @exception LifecycleException
      *                if this component detects a fatal error that needs to be
      *                reported
      */
-    public void stop() throws LifecycleException {
+    public void stopInternal() throws LifecycleException {
 
-        // Validate and update our current component state
-        if (!started)
-            throw new LifecycleException("StickySession failover rewite valve is already stopped.");
-        
-        lifecycle.fireLifecycleEvent(STOP_EVENT, null);
-        
-        started = false;
-
-        if (log.isInfoEnabled())
+        if (log.isInfoEnabled()){
             log.info(info + " stopped.");
+        }
+        super.stopInternal();
 
     }
 }

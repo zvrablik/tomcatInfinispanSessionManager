@@ -710,7 +710,7 @@ import org.infinispan.Cache;
                   StandardContext ctx=(StandardContext)this.getContainer();
                   Engine eng=(Engine)ctx.getParent().getParent();
                   domain=ctx.getEngineName();
-                  //ispn is distributable everytime
+                  //infinispan is distributable everytime
                   distributable = true;
                   StandardHost hst=(StandardHost)ctx.getParent();
                   String path = ctx.getPath();
