@@ -66,17 +66,17 @@ See http://www.jgroups.org/tutorial/html/ch01.html
 
 B 2)
 Sticky session mode:
-* add valve org.apache.catalina.session.ispn.StickySessionFailOverRewriteValve to conf/server.xml into Engine configuration
+* add valve org.apache.catalina.session.infinispan.StickySessionFailOverRewriteValve to conf/server.xml into Engine configuration
 
 <Engine name="Catalina" defaultHost="localhost" jvmRoute="tc1">         
-         <Valve className="org.apache.catalina.session.ispn.StickySessionFailOverRewriteValve"/>
+         <Valve className="org.apache.catalina.session.infinispan.StickySessionFailOverRewriteValve"/>
 
 Both modes sticky session and non-sticky session:
 
-* define session manager org.apache.catalina.session.ispn.InfinispanSessionManager in conf/context.xml to use this 
+* define session manager org.apache.catalina.session.infinispan.InfinispanSessionManager in conf/context.xml to use this
 session manager in all war applications
 
-<Manager className="org.apache.catalina.session.ispn.InfinispanSessionManager" /> 
+<Manager className="org.apache.catalina.session.infinispan.InfinispanSessionManager" />
 
 * optionally create infinispan configuration file in conf directory to override default infinispan and JGroups
 settings. The file name must be: sessionInfinispanConfig<appName>.xml
