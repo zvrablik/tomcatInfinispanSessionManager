@@ -75,7 +75,7 @@ public class TestCacheObj {
     /**
      * Create cache.
      *
-     * @param cacheName name of the ispn cache
+     * @param cacheName name of the infinispan cache
      * @return
      * @throws Exception
      */
