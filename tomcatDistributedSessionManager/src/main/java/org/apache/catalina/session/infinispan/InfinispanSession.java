@@ -167,7 +167,7 @@ public class InfinispanSession implements HttpSession, Session, Serializable {
         this.manager = manager;
         this.cache = cache;
         //store session without suffix to avoid session rename after cluster node disabled by load balancer
-        String sessionIdWithoutJvmRoute = manager.stripJvmRoute(sessionId);
+        String sessionIdWithoutJvmRoute = manager.stripDotSuffix(sessionId);
         this.attributes = new SessionAttributes(cache, sessionIdWithoutJvmRoute);
 
         this.metadata = new SessionMetaAttributes(cache, sessionIdWithoutJvmRoute);
@@ -668,21 +668,27 @@ public class InfinispanSession implements HttpSession, Session, Serializable {
             return true;
         }
 
-        long maxInactiveInterval = this.metadata.getMaxInactiveInterval();
-        long lastAccessedTime = this.metadata.getLastAccessedTime();
-        long thisAccessedTime = this.metadata.getThisAccessedTime();
+        try{
+            long maxInactiveInterval = this.metadata.getMaxInactiveInterval();
+            long lastAccessedTime = this.metadata.getLastAccessedTime();
+            long thisAccessedTime = this.metadata.getThisAccessedTime();
 
-        if (maxInactiveInterval > 0) {
-            long timeNow = System.currentTimeMillis();
-            int timeIdle;
-            if (LAST_ACCESS_AT_START) {
-                timeIdle = (int) ((timeNow - lastAccessedTime) / 1000L);
-            } else {
-                timeIdle = (int) ((timeNow - thisAccessedTime) / 1000L);
+            if (maxInactiveInterval > 0) {
+                long timeNow = System.currentTimeMillis();
+                int timeIdle;
+                if (LAST_ACCESS_AT_START) {
+                    timeIdle = (int) ((timeNow - lastAccessedTime) / 1000L);
+                } else {
+                    timeIdle = (int) ((timeNow - thisAccessedTime) / 1000L);
+                }
+                if (timeIdle >= maxInactiveInterval) {
+                    expire(true);
+                }
             }
-            if (timeIdle >= maxInactiveInterval) {
-                expire(true);
-            }
+        } catch (Exception ex ){
+            manager.getContainer().getLogger().error("Exception during validating session.", ex);
+
+            throw new RuntimeException(ex);
         }
 
         return (this.isValid);
@@ -1625,7 +1631,6 @@ public class InfinispanSession implements HttpSession, Session, Serializable {
         }
 
     }
-
 
     private static class PrivilegedSetTccl
     implements PrivilegedAction<Void> {

@@ -335,6 +335,7 @@ public class InfinispanSessionManager extends ManagerBase {
 
         //connect to existing session
         Session session = new InfinispanSession(this, cache, sessionId);
+        System.out.println("New local session with id: " + sessionId);//TODO remove
         session.setValid(true);
 
         return session;
@@ -350,7 +351,10 @@ public class InfinispanSessionManager extends ManagerBase {
         id = this.stripDotSuffix(id);//remove possible jvm route, session metadata is not stored with jvm route in distributed cache
         String cacheId = SessionMetaAttributes.createCacheId(id);
         //test metadata existence in cache
-        return cache.get(cacheId) != null;
+        boolean exists = AtomicMapLookup.getFineGrainedAtomicMap(cache, cacheId, false) != null;
+        System.out.println("Session with cache id "+ cacheId + " exists:" + exists);
+
+        return exists;
     }
 
     /**
@@ -383,7 +387,10 @@ public class InfinispanSessionManager extends ManagerBase {
             return (null);
 
         Session session = super.findSession(sessionId);
+        System.out.println(" local session found - " + session != null);
+
         if ( session == null && this.sessionExists(sessionId) ){
+            System.out.println(" try create only local session because session doesn't exist locally, but there is metadata entry in distributed cache");
             session = this.createLocalSession(sessionId);
         }
 
