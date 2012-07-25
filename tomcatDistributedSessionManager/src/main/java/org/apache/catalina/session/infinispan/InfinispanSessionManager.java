@@ -24,6 +24,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 
+import javax.transaction.TransactionManager;
 import java.io.File;
 import java.io.IOException;
 import java.security.AccessController;
@@ -526,8 +527,21 @@ public class InfinispanSessionManager extends ManagerBase {
     private Configuration createDefaultInfinispanConfiguration(String appName){
         ConfigurationBuilder cb = new ConfigurationBuilder();
         cb.jmxStatistics().enabled( true );
-        cb.clustering().cacheMode(CacheMode.DIST_SYNC).l1().disable().lifespan(600000).hash().numOwners(2).rehashRpcTimeout(6000);
+//        cb.clustering().cacheMode(CacheMode.REPL_SYNC)
+//                .clustering()
+//                .sync()
+//                .transaction().syncCommitPhase(true).syncRollbackPhase(true)
+//                .cacheStopTimeout(0);
+//        cb.invocationBatching().enable();
+
+        //distributed cache 2 copies on three cluster nodes
+        cb.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(2)
+                .clustering()
+                .sync()
+                .transaction().syncCommitPhase(true).syncRollbackPhase(true)
+                .cacheStopTimeout(0);
         cb.invocationBatching().enable();
+
         //cb.transaction().transactionManagerLookup(new DummyTransactionManagerLookup()).lockingMode(LockingMode.PESSIMISTIC);
         //default config
         //cb.name("_session_attr_" + appName);
@@ -687,5 +701,13 @@ public class InfinispanSessionManager extends ManagerBase {
      */
     public String getCacheName(){
         return this.cache.getName();
+    }
+
+    /**
+     * Get transaction manager
+     * @return
+     */
+    protected TransactionManager getTransactionManager(){
+        return this.cache.getAdvancedCache().getTransactionManager();
     }
 }

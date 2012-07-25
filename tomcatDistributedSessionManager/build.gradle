@@ -22,5 +22,5 @@ test {
 	listeners << 'mockit.integration.testng.Initializer'
 	}
 
-    //testLogging.showStandardStreams = true
+    testLogging.showStandardStreams = true
 }

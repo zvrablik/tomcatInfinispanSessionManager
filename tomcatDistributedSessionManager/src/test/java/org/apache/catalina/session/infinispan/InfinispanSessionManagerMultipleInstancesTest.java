@@ -9,6 +9,7 @@ import org.apache.catalina.session.StandardSession;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.transaction.TransactionManager;
 import java.util.HashMap;
 
 import static org.testng.AssertJUnit.*;
@@ -32,7 +33,7 @@ public class InfinispanSessionManagerMultipleInstancesTest  {
     public void testCreateSession() throws Exception{
         Session emptySession = managerOne.createEmptySession();
         assertTrue( emptySession instanceof StandardSession);
-        assertNull( emptySession.getId());
+        assertNull(emptySession.getId());
 
         Session session = managerOne.createSession(null);
         assertTrue( session instanceof InfinispanSession);
@@ -56,10 +57,14 @@ public class InfinispanSessionManagerMultipleInstancesTest  {
      */
     @Test
     public void testAddSession() throws Exception{
+        TransactionManager tm = managerOne.getTransactionManager();
+        tm.begin();
         Session session = managerOne.createSession(null);
         session.getSession().setAttribute("attrName", "attrValue");
         assertTrue( session instanceof InfinispanSession);
         managerOne.add(session);
+        tm.commit();
+
         Session sessionFromManager = managerOne.findSession(session.getId());
         assertTrue( sessionFromManager instanceof InfinispanSession);
         assertEquals(session.getId(), sessionFromManager.getId());
@@ -68,14 +73,39 @@ public class InfinispanSessionManagerMultipleInstancesTest  {
     }
 
     /**
-     * Test add session to manager, and find in another manager
+     * Test add session to manager, and find in another manager witht transaction
      * @throws Exception
      */
     @Test
     public void testFindSession() throws Exception{
+        TransactionManager tm = managerOne.getTransactionManager();
+        tm.begin();
         Session session = managerOne.createSession(null);
         session.getSession().setAttribute("attrName", "attrValue");
-        assertTrue( session instanceof InfinispanSession);
+        assertTrue(session instanceof InfinispanSession);
+        managerOne.add(session);
+        tm.commit();
+
+        TransactionManager tm2 = managerOne.getTransactionManager();
+        tm2.begin();
+        Session sessionFromManager = managerThree.findSession(session.getId());
+        assertNotNull(sessionFromManager);
+        assertTrue( sessionFromManager instanceof InfinispanSession);
+        assertEquals(session.getId(), sessionFromManager.getId());
+        assertEquals( "attrValue", sessionFromManager.getSession().getAttribute("attrName"));
+        tm2.commit();
+
+    }
+
+    /**
+     * Test add session to manager, and find in another manager
+     * @throws Exception
+     */
+    @Test
+    public void testFindSessionWithoutTrn() throws Exception{
+        Session session = managerOne.createSession(null);
+        session.getSession().setAttribute("attrName", "attrValue");
+        assertTrue(session instanceof InfinispanSession);
         managerOne.add(session);
         Session sessionFromManager = managerThree.findSession(session.getId());
         assertNotNull(sessionFromManager);
