@@ -48,12 +48,12 @@ public class InfinispanSessionManager extends ManagerBase {
     /**
      * Distributed cache manager
      */
-    private DefaultCacheManager manager;
+    DefaultCacheManager manager;
 
     /**
      * distributed session metadata cache
      */
-    private Cache<String, Object> cache;
+    Cache<String, Object> cache;
 
 
     // ---------------------------------------------------- Security Classes
@@ -232,6 +232,7 @@ public class InfinispanSessionManager extends ManagerBase {
 //            }
 //        }
 
+        //stop infinispan cache if last node?
         // Require a new random number generator if we are restarted
         super.stopInternal();
     }
@@ -393,6 +394,8 @@ public class InfinispanSessionManager extends ManagerBase {
         if ( session == null && this.sessionExists(sessionId) ){
             System.out.println(" try create only local session because session doesn't exist locally, but there is metadata entry in distributed cache");
             session = this.createLocalSession(sessionId);
+            //add to local sessions to avoid re-initialization every request
+            this.sessions.put(session.getIdInternal(), session);
         }
 
         return session;
