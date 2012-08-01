@@ -6,6 +6,7 @@ package org.apache.catalina.session.infinispan;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.core.StandardEngine;
+import org.infinispan.manager.DefaultCacheManager;
 
 /**
  * InfinispanSessionManagerCommon

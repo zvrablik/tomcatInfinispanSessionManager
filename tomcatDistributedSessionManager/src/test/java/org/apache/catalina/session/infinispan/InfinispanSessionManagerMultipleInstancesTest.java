@@ -6,6 +6,7 @@ package org.apache.catalina.session.infinispan;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.Session;
 import org.apache.catalina.session.StandardSession;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -124,6 +125,19 @@ public class InfinispanSessionManagerMultipleInstancesTest  {
         managerOne = createSessionManager("zzz");
         managerTwo = createSessionManager("zzz");
         managerThree = createSessionManager("zzz");
+    }
+
+    @AfterMethod
+    private void removeCacheManagersManagers() throws LifecycleException{
+        this.stopManager(managerOne);
+        this.stopManager(managerTwo);
+        this.stopManager(managerThree);
+    }
+
+    private void stopManager( InfinispanSessionManager mgr) throws LifecycleException{
+        mgr.cache.stop();
+        mgr.manager.stop();
+        mgr.stopInternal();
     }
 
     /**
