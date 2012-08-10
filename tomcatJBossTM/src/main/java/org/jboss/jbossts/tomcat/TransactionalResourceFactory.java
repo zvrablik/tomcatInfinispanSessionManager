@@ -84,8 +84,6 @@ public class TransactionalResourceFactory implements ObjectFactory
         Enumeration addrs = ref.getAll();
         HashMap<String, String> params = new HashMap();
 
-        System.out.println("TransactionalResourceFactory ");
-
         // convert the Addresses into easier to handle String key/values
         while (addrs.hasMoreElements())
         {

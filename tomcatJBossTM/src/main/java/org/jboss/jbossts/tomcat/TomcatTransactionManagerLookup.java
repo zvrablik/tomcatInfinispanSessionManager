@@ -28,7 +28,7 @@ public class TomcatTransactionManagerLookup implements TransactionManagerLookup 
     private static TransactionManager tm;
 
     public TomcatTransactionManagerLookup(){
-        System.out.println("TomcatTransactionManagerLookup instantiated.");
+        log.info("TomcatTransactionManagerLookup instantiated.");
     }
 
     @Override

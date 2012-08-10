@@ -169,8 +169,8 @@ public class XADataSourceWrapper implements XADataSource, DataSource
         // on classloader, so we fool it by changing the Thread context from the
         // webapps classloader to its parent (the server's classloader):
         ClassLoader webappClassLoader = Thread.currentThread().getContextClassLoader();
-        System.out.println(webappClassLoader);
-        System.out.println(webappClassLoader.getParent());
+        //System.out.println(webappClassLoader);
+        //System.out.println(webappClassLoader.getParent());
         Thread.currentThread().setContextClassLoader(webappClassLoader.getParent());
         Connection connection;
         try

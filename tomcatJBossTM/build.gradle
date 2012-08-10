@@ -1,4 +1,5 @@
 dependencies {
+    version = '1.0'
     //tomcat dependencies
     compile 'org.apache.tomcat:catalina:' + tomcatVersion
     compile 'org.apache.tomcat:coyote:' + tomcatVersion
@@ -11,6 +12,17 @@ dependencies {
         artifact {
             name = "infinispan-core"
             type = 'jar'
+        }
+    }
+
+    jar {
+        manifest {
+            attributes("Implementation-Title": "tomcat JBoss transaction manager integration",
+                       "Implementation-Version": version,
+                       'Built-By': System.getProperty('user.name'),
+                       'Built-Date': new Date(),
+                       'Built-JDK': System.getProperty('java.version')
+            )
         }
     }
 }
