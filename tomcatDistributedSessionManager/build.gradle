@@ -1,4 +1,6 @@
 dependencies {
+
+    version='1.0.0.7.0.28' //where 7.0.28 is tomcat version tested with
     //tomcat dependencies
     compile 'org.apache.tomcat:tomcat-catalina:' + tomcatSevenVersion
     compile 'org.apache.tomcat:tomcat-coyote:' + tomcatSevenVersion
@@ -10,7 +12,18 @@ dependencies {
          name = "infinispan-core"
          type = 'jar'
       }
-    } 
+    }
+
+    jar {
+        manifest {
+            attributes("Implementation-Title": "tomcat infinispan distributed session manager",
+                    "Implementation-Version": version,
+                    'Built-By': System.getProperty('user.name'),
+                    'Built-Date': new Date(),
+                    'Built-JDK': System.getProperty('java.version')
+            )
+        }
+    }
 
   testCompile "org.testng:testng:6.1.1"
   testCompile "com.googlecode.jmockit:jmockit:0.999.11"
