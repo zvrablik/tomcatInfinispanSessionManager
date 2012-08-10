@@ -185,6 +185,10 @@ public class InfinispanSessionManagerTest {
      * @throws LifecycleException
      */
     protected InfinispanSessionManager createSessionManager(String nameSuffix) throws LifecycleException {
-        return InfinispanSessionManagerCommon.getInitializedManager(nameSuffix);
+        InfinispanSessionManager sessionManager = InfinispanSessionManagerCommon.getInitializedManager(nameSuffix, true);
+
+        sessionManager.setDistributable(true);
+
+        return sessionManager;
     }
 }

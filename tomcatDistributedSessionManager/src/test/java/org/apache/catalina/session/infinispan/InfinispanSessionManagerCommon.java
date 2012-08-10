@@ -20,7 +20,7 @@ public class InfinispanSessionManagerCommon {
      * @return
      * @throws org.apache.catalina.LifecycleException
      */
-    public static InfinispanSessionManager getInitializedManager(String name) throws LifecycleException {
+    public static InfinispanSessionManager getInitializedManager(String name, boolean distributed) throws LifecycleException {
         InfinispanSessionManager infinispanSessionManager = new InfinispanSessionManager();
 
         StandardEngine engine = new StandardEngine();
@@ -33,6 +33,7 @@ public class InfinispanSessionManagerCommon {
         StandardContext context = new StandardContext();
         context.setParent(engine);
         context.setName("contextName" + name);
+        context.setDistributable(distributed);
 
         infinispanSessionManager.setContainer(context);
 

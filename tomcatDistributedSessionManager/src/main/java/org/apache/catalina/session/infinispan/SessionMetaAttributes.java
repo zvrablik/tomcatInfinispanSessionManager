@@ -5,7 +5,6 @@ package org.apache.catalina.session.infinispan;
 
 import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicMapLookup;
-import org.infinispan.atomic.FineGrainedAtomicMap;
 
 import java.util.Map;
 
@@ -67,7 +66,6 @@ class SessionMetaAttributes {
     public long getCreationTime() {
         Map<String, Object> c = this.getCache();
         Object creationTimeObject = c.get(CREATION_TIME);
-        System.out.println("creation time: " +creationTimeObject);//TODO remove later
         return (Long)creationTimeObject;
     }
 
@@ -77,7 +75,6 @@ class SessionMetaAttributes {
 
     public long getLastAccessedTime() {
         Object lastAccessedTimeObject = this.getCache().get(LAST_ACCESSED_TIME);
-        System.out.println("last accessed time: " +lastAccessedTimeObject);//TODO remove later
         return (Long)lastAccessedTimeObject;
     }
 
@@ -106,9 +103,9 @@ class SessionMetaAttributes {
      *
      * @return
      */
-    private FineGrainedAtomicMap<String, Object> getCache() {
-        FineGrainedAtomicMap<String, Object> cacheItem =
-                AtomicMapLookup.getFineGrainedAtomicMap(cache, cacheId);
+    private Map<String, Object> getCache() {
+        Map<String, Object> cacheItem =
+                AtomicMapLookup.getAtomicMap(cache, cacheId);
 
         return cacheItem;
     }
@@ -134,7 +131,7 @@ class SessionMetaAttributes {
         this.sessionId = id;
         this.cacheId = SessionMetaAttributes.createCacheId(id);
 
-        FineGrainedAtomicMap<String, Object> newCache = this.getCache();
+        Map<String, Object> newCache = this.getCache();
 
         //move content to new cache
         for ( String key : oldCache.keySet() ){

@@ -55,7 +55,6 @@ import org.apache.catalina.util.Enumerator;
 import org.apache.catalina.util.StringManager;
 import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicMapLookup;
-import org.infinispan.atomic.FineGrainedAtomicMap;
 
 /**
  * Standard implementation of the <b>Session</b> interface.  This object is
@@ -1672,7 +1671,7 @@ class SessionMetaAttributes {
         this.metadataCache = metadataCache;
         this.sessionId = sessionId;
         
-        FineGrainedAtomicMap<String, Object> cacheItem = getCache();
+        Map<String, Object> cacheItem = getCache();
         cacheItem.put(CREATION_TIME, 0L);
         cacheItem.put(LAST_ACCESSED_TIME, 0L);
         cacheItem.put(MAX_INACTIVE_INTERVAL, -1);
@@ -1716,9 +1715,9 @@ class SessionMetaAttributes {
      * 
      * @return
      */
-    private FineGrainedAtomicMap<String, Object> getCache() {
-        FineGrainedAtomicMap<String, Object> cacheItem = 
-                AtomicMapLookup.getFineGrainedAtomicMap(metadataCache, sessionId);
+    private Map<String, Object> getCache() {
+        Map<String, Object> cacheItem =
+                AtomicMapLookup.getAtomicMap(metadataCache, sessionId);
         return cacheItem;
     }
     
@@ -1754,7 +1753,7 @@ class SessionMetaAttributes {
 
 
     public void clear() {
-        FineGrainedAtomicMap<String, Object> attributes = getCachedAttributes();
+        Map<String, Object> attributes = getCachedAttributes();
        attributes.clear();
     }
 
@@ -1763,7 +1762,7 @@ class SessionMetaAttributes {
       * put new attribute value
       */
     public Object put(String key, Object value) {
-        FineGrainedAtomicMap<String, Object> attributes = getCachedAttributes();
+        Map<String, Object> attributes = getCachedAttributes();
         
         return attributes.put(key, value);
     }
@@ -1772,7 +1771,7 @@ class SessionMetaAttributes {
       * get all attribute names
       */
     public Set<String> keys() {
-        FineGrainedAtomicMap<String, Object> attributes = getCachedAttributes();
+        Map<String, Object> attributes = getCachedAttributes();
         
         return attributes.keySet();
     }
@@ -1781,7 +1780,7 @@ class SessionMetaAttributes {
       * Remove attribute from session
       */
     public Object remove(String key) {
-        FineGrainedAtomicMap<String, Object> attributes = getCachedAttributes();
+        Map<String, Object> attributes = getCachedAttributes();
         
         return attributes.remove(key);
     }
@@ -1790,7 +1789,7 @@ class SessionMetaAttributes {
      * Get attribute of distributed cache attributes
      */
     public Object get(String key) {
-        FineGrainedAtomicMap<String, Object> attributes = getCachedAttributes();
+        Map<String, Object> attributes = getCachedAttributes();
         
         return attributes.get( key );
     }
@@ -1800,7 +1799,7 @@ class SessionMetaAttributes {
      * @return
      */
     public Map<String, Object> getAll(){
-        FineGrainedAtomicMap<String, Object> attributes = getCachedAttributes();
+        Map<String, Object> attributes = getCachedAttributes();
         Map<String, Object> attribs = new HashMap<String, Object>();
         attribs.putAll( attributes );
         
@@ -1812,17 +1811,17 @@ class SessionMetaAttributes {
      * @param attributes
      */
     public void putAll(Map<String, Object> attributes){
-        FineGrainedAtomicMap<String, Object> attribs = getCachedAttributes();
+        Map<String, Object> attribs = getCachedAttributes();
         attribs.putAll(attributes);
     }
 
     /**
      * get attributes reference to distributed cache
      */
-    private FineGrainedAtomicMap<String, Object> getCachedAttributes() {
+    private Map<String, Object> getCachedAttributes() {
         //use atomic map to store one session attributes.
         //doesn't use distributed transaction, use <invocationBatching enabled="true"/> in _session_attr named cache
-       FineGrainedAtomicMap<String, Object> attributes = AtomicMapLookup.getFineGrainedAtomicMap(attributesCache, sessionId);
+       Map<String, Object> attributes = AtomicMapLookup.getAtomicMap(attributesCache, sessionId);
         
         return attributes;
     }

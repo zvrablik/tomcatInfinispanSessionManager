@@ -41,7 +41,7 @@ import java.util.Set;
  * User: zvrablikhenek
  * Since: 6/25/12
  */
-public class InfinispanSessionManager extends ManagerBase {
+public class    InfinispanSessionManager extends ManagerBase {
 
     private final Log log = LogFactory.getLog(InfinispanSessionManager.class); // must not be static
 
@@ -244,8 +244,6 @@ public class InfinispanSessionManager extends ManagerBase {
      */
     protected void initInternal() throws LifecycleException{
         super.initInternal();
-
-        //TODO ?? disable clustering if war state not distributed
         this.initInfinispan();
     }
 
@@ -282,7 +280,8 @@ public class InfinispanSessionManager extends ManagerBase {
     }
 
     /**
-     * Create new InfinispanSession without using wrapper
+     * Create new InfinispanSession without using wrapper or StandardSession in case
+     * application is not configured as distributable
      * @param sessionId
      * @return
      */
@@ -307,7 +306,13 @@ public class InfinispanSessionManager extends ManagerBase {
         }
 
         //create a Session instance
-        Session session = new InfinispanSession(this, cache, id);
+        Session session;
+        if ( this.getDistributable()){
+            session = new InfinispanSession(this, cache, id);
+        } else {
+            session = new StandardSession(this);
+            session.setId(id);
+        }
 
         // Initialize the properties of the new session and return it
         session.setNew(true);
@@ -326,6 +331,7 @@ public class InfinispanSessionManager extends ManagerBase {
 
     /**
      * Create local cache to use distributed cache metadata and data in cluster node
+     * or StandardSession if application is not configured as distributed
      * @param sessionId
      * @return
      * @throws RuntimeException local session can't be created
@@ -335,9 +341,15 @@ public class InfinispanSessionManager extends ManagerBase {
             throw new RuntimeException("Can't create local session when sessionId is null!");
         }
 
-        //connect to existing session
-        Session session = new InfinispanSession(this, cache, sessionId);
-        System.out.println("New local session with id: " + sessionId);//TODO remove
+        Session session;
+        if (this.getDistributable()){
+            //connect to existing session
+            session = new InfinispanSession(this, cache, sessionId);
+        } else {
+            session = new StandardSession(this);
+        }
+
+        log.debug("New local session with id: " + sessionId);
         session.setValid(true);
 
         return session;
@@ -349,12 +361,25 @@ public class InfinispanSessionManager extends ManagerBase {
      * @return
      */
     protected boolean sessionExists(String id) {
-        String fullSessionId = id;
-        id = this.stripDotSuffix(id);//remove possible jvm route, session metadata is not stored with jvm route in distributed cache
-        String cacheId = SessionMetaAttributes.createCacheId(id);
-        //test metadata existence in cache
-        boolean exists = AtomicMapLookup.getFineGrainedAtomicMap(cache, cacheId, false) != null;
-        System.out.println("Session with cache id "+ cacheId + " exists:" + exists);
+        boolean exists;
+
+        if (this.getDistributable()){
+            String fullSessionId = id;
+            id = this.stripDotSuffix(id);//remove possible jvm route, session metadata is not stored with jvm route in distributed cache
+            String cacheId = SessionMetaAttributes.createCacheId(id);
+            //test metadata existence in cache
+            exists = AtomicMapLookup.getAtomicMap(cache, cacheId, false) != null;
+            if (log.isDebugEnabled()){
+              log.debug("Session with cache id "+ cacheId + " exists?:" + exists);
+            }
+        } else {
+            //local session only
+            exists = sessions.containsKey(id);
+            if (log.isDebugEnabled()){
+                log.debug("Session with id "+ id +" exists?: " + exists);
+            }
+        }
+
 
         return exists;
     }
@@ -367,12 +392,16 @@ public class InfinispanSessionManager extends ManagerBase {
     public void add(Session session){
         Session newSession;
 
-        if ( session instanceof InfinispanSession){
-            newSession = session;
-        } else if (session instanceof StandardSessionWrapper){
-            newSession = new InfinispanSession(this, cache, (StandardSessionWrapper)session);
+        if (this.getDistributable()){
+            if ( session instanceof InfinispanSession){
+                newSession = session;
+            } else if (session instanceof StandardSessionWrapper){
+                newSession = new InfinispanSession(this, cache, (StandardSessionWrapper)session);
+            } else {
+                newSession = new InfinispanSession(this, cache, session.getId());
+            }
         } else {
-            newSession = new InfinispanSession(this, cache, session.getId());
+            newSession = session;
         }
 
         super.add( newSession );
@@ -389,10 +418,10 @@ public class InfinispanSessionManager extends ManagerBase {
             return (null);
 
         Session session = super.findSession(sessionId);
-        System.out.println(" local session found - " + session != null);
+        log.debug(" local session found? - " + session != null);
 
         if ( session == null && this.sessionExists(sessionId) ){
-            System.out.println(" try create only local session because session doesn't exist locally, but there is metadata entry in distributed cache");
+            log.debug(" try create only local session because session doesn't exist locally, but there is metadata entry in distributed cache");
             session = this.createLocalSession(sessionId);
             //add to local sessions to avoid re-initialization every request
             this.sessions.put(session.getIdInternal(), session);
@@ -410,17 +439,16 @@ public class InfinispanSessionManager extends ManagerBase {
     public void remove(Session session, boolean update) {
         super.remove(session, update);
 
-        //remove attributes
-        String attributesCacheId = SessionAttributes.createCacheId(session.getId());
-        AtomicMapLookup.removeAtomicMap(cache, attributesCacheId);
+        if ( this.getDistributable()){
+            //remove attributes
+            String attributesCacheId = SessionAttributes.createCacheId(session.getId());
+            AtomicMapLookup.removeAtomicMap(cache, attributesCacheId);
 
-        //remove metadata
-        String metadataCacheId = SessionMetaAttributes.createCacheId(session.getId());
-        AtomicMapLookup.removeAtomicMap(cache, metadataCacheId);
+            //remove metadata
+            String metadataCacheId = SessionMetaAttributes.createCacheId(session.getId());
+            AtomicMapLookup.removeAtomicMap(cache, metadataCacheId);
+        }
     }
-    //TODO override remove function to remove cache items, namespace must be used!
-
-
 
     // ------------------------------------------------------ Protected Methods
 
@@ -587,16 +615,11 @@ public class InfinispanSessionManager extends ManagerBase {
 
         try {
             if ( useDefault ){
-                File defaultFile = this.getConfigFile("defaultDistributedCache.xml");
-                if ( defaultFile != null){
-                    log.debug("Initialize infinispan cache manager. Use default config file: " + defaultFile.getAbsolutePath());                    manager = new DefaultCacheManager(defaultFile.getAbsolutePath());
-                } else {
-                    GlobalConfiguration globalDefaultConfig = this.createGlobalDefaultInfinispanConfiguration(appName);
-                    Configuration cacheConfiguration = this.createDefaultInfinispanConfiguration(appName);
+                   GlobalConfiguration globalDefaultConfig = this.createGlobalDefaultInfinispanConfiguration(appName);
+                Configuration cacheConfiguration = this.createDefaultInfinispanConfiguration(appName);
 
-                    log.debug("Initialize infinispan cache manager. Default cache settings used.");
-                    manager = new DefaultCacheManager(globalDefaultConfig, cacheConfiguration);
-                }
+                log.debug("Initialize infinispan cache manager. Default cache settings used.");
+                manager = new DefaultCacheManager(globalDefaultConfig, cacheConfiguration);
             } else {
 
                 log.debug("Initialize infinispan cache manager. Config file: " + configFile.getAbsolutePath());
@@ -682,20 +705,23 @@ public class InfinispanSessionManager extends ManagerBase {
      * @throws LifecycleException
      */
     private void initInfinispan() throws LifecycleException {
+        if (this.getDistributable()) {
+            String containerName = container.getName();
+            if (containerName.startsWith("/")){
+                //remove leading
+                containerName = containerName.substring(1);
+            }
+            containerName = containerName.replace('/', '_');
 
-        String containerName = container.getName();
-        if (containerName.startsWith("/")){
-            //remove leading
-            containerName = containerName.substring(1);
+            log.info("Initialize infinispan cache. container name: " + container.getName());
+            DefaultCacheManager manager = initializeCacheManager( containerName );
+
+            String cacheName = "tc_session_" + containerName;
+            cache = getCacheObject(manager, cacheName);
+            cache.addListener( new InfinispanSessionListener( this ) );
+        } else {
+            log.info("Application is not configured to be distributable. App name: " + container.getName());
         }
-        containerName = containerName.replace('/', '_');
-
-        log.debug("Initialize infinispan cache app: " +  containerName);
-        DefaultCacheManager manager = initializeCacheManager( containerName );
-
-        String cacheName = "tc_session_" + containerName;
-        cache = getCacheObject(manager, cacheName);
-        cache.addListener( new InfinispanSessionListener( this ) );
     }
 
     /**

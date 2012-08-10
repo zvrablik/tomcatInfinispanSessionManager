@@ -122,16 +122,16 @@ public class InfinispanSessionManagerMultipleInstancesTest  {
      */
     @BeforeMethod
     private void createSessionManagers() throws LifecycleException {
-        managerOne = createSessionManager("zzz");
-        managerTwo = createSessionManager("zzz");
-        managerThree = createSessionManager("zzz");
+        managerOne = createSessionManager("zzz", true);
+        managerTwo = createSessionManager("zzz", true);
+        managerThree = createSessionManager("zzz", true);
     }
 
     @AfterMethod
     private void removeCacheManagersManagers() throws LifecycleException{
-        this.stopManager(managerOne);
-        this.stopManager(managerTwo);
-        this.stopManager(managerThree);
+       // this.stopManager(managerOne);
+       // this.stopManager(managerTwo);
+       // this.stopManager(managerThree);
     }
 
     private void stopManager( InfinispanSessionManager mgr) throws LifecycleException{
@@ -145,7 +145,9 @@ public class InfinispanSessionManagerMultipleInstancesTest  {
      * @return
      * @throws org.apache.catalina.LifecycleException
      */
-    protected InfinispanSessionManager createSessionManager(String nameSuffix) throws LifecycleException {
-        return InfinispanSessionManagerCommon.getInitializedManager(nameSuffix);
+    protected InfinispanSessionManager createSessionManager(String nameSuffix, boolean distributed) throws LifecycleException {
+        InfinispanSessionManager sessionManager = InfinispanSessionManagerCommon.getInitializedManager(nameSuffix, distributed);
+
+        return sessionManager;
     }
 }
