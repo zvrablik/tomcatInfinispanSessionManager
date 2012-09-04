@@ -308,7 +308,9 @@ public class    InfinispanSessionManager extends ManagerBase {
         //create a Session instance
         Session session;
         if ( this.getDistributable()){
-            session = new InfinispanSession(this, cache, id);
+            InfinispanSession ispnSession = new InfinispanSession(this, cache, id);
+            ispnSession.tellNew();
+            session = ispnSession;
         } else {
             session = new StandardSession(this);
             session.setId(id);
