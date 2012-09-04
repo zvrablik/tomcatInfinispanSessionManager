@@ -441,11 +441,11 @@ public class    InfinispanSessionManager extends ManagerBase {
 
         if ( this.getDistributable()){
             //remove attributes
-            String attributesCacheId = SessionAttributes.createCacheId(session.getId());
+            String attributesCacheId = SessionAttributes.createCacheId(this.stripDotSuffix( session.getId() ) );
             AtomicMapLookup.removeAtomicMap(cache, attributesCacheId);
 
             //remove metadata
-            String metadataCacheId = SessionMetaAttributes.createCacheId(session.getId());
+            String metadataCacheId = SessionMetaAttributes.createCacheId( this.stripDotSuffix( session.getId() ) );
             AtomicMapLookup.removeAtomicMap(cache, metadataCacheId);
         }
     }
