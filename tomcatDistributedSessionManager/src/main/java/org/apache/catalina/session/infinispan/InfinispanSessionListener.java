@@ -46,7 +46,7 @@ public class InfinispanSessionListener {
 
         Cache<String, Object> cache = event.getCache();
         String cacheName = cache.getName();
-        log.debug("REMOVED event Cache : " + cacheName
+        log.info("REMOVED event Cache : " + cacheName
                 + " removed session. Session id: " + sessionId);
 
         manager.removeLocalSession( sessionId );
