@@ -309,18 +309,20 @@ public class    InfinispanSessionManager extends ManagerBase {
         Session session;
         if ( this.getDistributable()){
             InfinispanSession ispnSession = new InfinispanSession(this, cache, id);
+
+            //set initial metadata before listeners are propagated (through tellNew)
+            this.setSessionInitialMetadata(ispnSession);
+
             ispnSession.tellNew();
             session = ispnSession;
         } else {
             session = new StandardSession(this);
+
+            //set initial metadata before listeners are propagated (through setId which calls tellNew internally)
+            this.setSessionInitialMetadata(session);
+
             session.setId(id);
         }
-
-        // Initialize the properties of the new session and return it
-        session.setNew(true);
-        session.setValid(true);
-        session.setCreationTime(System.currentTimeMillis());
-        session.setMaxInactiveInterval(this.maxInactiveInterval);
 
         SessionTiming timing = new SessionTiming(session.getCreationTime(), 0);
         synchronized (sessionCreationTiming) {
@@ -329,6 +331,14 @@ public class    InfinispanSessionManager extends ManagerBase {
         }
         return (session);
 
+    }
+
+    private void setSessionInitialMetadata(Session session){
+        // Initialize the properties of the new session and return it
+        session.setNew(true);
+        session.setValid(true);
+        session.setCreationTime(System.currentTimeMillis());
+        session.setMaxInactiveInterval(this.maxInactiveInterval);
     }
 
     /**
