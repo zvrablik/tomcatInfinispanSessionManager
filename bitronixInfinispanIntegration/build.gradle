@@ -1,0 +1,24 @@
+dependencies {
+    //tomcat dependencies
+    compile 'org.codehaus.btm:btm:' + btmVersion
+
+    //infinispan dependencies
+    compile([group: 'org.infinispan', name: 'infinispan-core', version: infinispanVersion]) {
+      artifact {
+         name = "infinispan-core"
+         type = 'jar'
+      }
+    } 
+
+  testCompile "org.testng:testng:6.1.1"
+  testCompile "com.googlecode.jmockit:jmockit:0.999.11"
+}
+
+test {
+    useTestNG()
+    options{
+	listeners << 'mockit.integration.testng.Initializer'
+	}
+
+    testLogging.showStandardStreams = true
+}

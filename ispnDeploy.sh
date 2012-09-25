@@ -1,17 +1,13 @@
 #!/bin/bash
 echo "deploy sessionManager"
-DEV_PATH=/home/ext/devel/myProjects/tomcatInfinispanSessionManager
-SUFFIX="HEAD"$1
+DEV_PATH=~/devel/myProjects/tomcatInfinispanSessionManager
 #TOMCAT_PATH=/home/zvrablik/ismart/testLBTomcat
-TOMCAT_PATH=~/ismart/ismart$SUFFIX
-
+TOMCAT_PATH=~/tomcat/ispnTest
 
 echo "devPath: $DEV_PATH"
 echo "tomcatPath: $TOMCAT_PATH"
 
-SESSION_MANAGER_VERSION=1.0.1.7.0.28-SNAPSHOT
-
-cp $DEV_PATH/tomcatDistributedSessionManager/build/libs/tomcatDistributedSessionManager-$SESSION_MANAGER_VERSION.jar $TOMCAT_PATH/lib/tomcatDistributedSessionManager.jar
+cp $DEV_PATH/tomcatDistributedSessionManager/build/libs/tomcatDistributedSessionManager-1.0-SNAPSHOT.jar $TOMCAT_PATH/lib/tomcatDistributedSessionManager.jar
 #don't use transaction manager yet
 #cp $DEV_PATH/tomcatJBossTM/build/libs/tomcatJBossTM-.jar $TOMCAT_PATH/lib/jbossTM/tomcatJbossTM.jar
 cp $DEV_PATH/memoryAgent/build/libs/memoryAgent-1.0-SNAPSHOT.jar $TOMCAT_PATH/lib/memoryAgent.jar

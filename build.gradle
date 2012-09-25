@@ -23,4 +23,5 @@ subprojects {
     jbossTSVersion = '4.16.2.Final'
     tomcatVersion = '6.0.29'
     tomcatSevenVersion = '7.0.28'
+    btmVersion='2.1.3'
 }
