@@ -1,6 +1,6 @@
 dependencies {
 
-    version='1.0.1.7.0.28' //where 7.0.28 is tomcat version tested with
+    version='1.0.2.7.0.28-SNAPSHOT' //where 7.0.28 is tomcat version tested with
     //tomcat dependencies
     compile 'org.apache.tomcat:tomcat-catalina:' + tomcatSevenVersion
     compile 'org.apache.tomcat:tomcat-coyote:' + tomcatSevenVersion
