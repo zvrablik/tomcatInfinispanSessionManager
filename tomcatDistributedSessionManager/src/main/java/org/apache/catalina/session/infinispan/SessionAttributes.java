@@ -112,7 +112,7 @@ public class SessionAttributes {
     private Map<String, Object> getCachedAttributes() {
         //use atomic map to store one session attributes.
         //doesn't use distributed transaction, use <invocationBatching enabled="true"/> in _session_attr named cache
-        Map<String, Object> attributes = AtomicMapLookup.getAtomicMap(attributesCache, cacheId);
+        Map<String, Object> attributes = AtomicMapLookup.getFineGrainedAtomicMap(attributesCache, cacheId);
 
         return attributes;
     }

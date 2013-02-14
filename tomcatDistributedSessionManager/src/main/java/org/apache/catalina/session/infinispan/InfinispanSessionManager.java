@@ -380,7 +380,7 @@ public class    InfinispanSessionManager extends ManagerBase {
             id = this.stripDotSuffix(id);//remove possible jvm route, session metadata is not stored with jvm route in distributed cache
             String cacheId = SessionMetaAttributes.createCacheId(id);
             //test metadata existence in cache
-            exists = AtomicMapLookup.getAtomicMap(cache, cacheId, false) != null;
+            exists = AtomicMapLookup.getFineGrainedAtomicMap(cache, cacheId, false) != null;
             if (log.isDebugEnabled()){
               log.debug("Session with cache id "+ cacheId + " exists?:" + exists);
             }

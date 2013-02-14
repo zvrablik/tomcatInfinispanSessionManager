@@ -105,7 +105,7 @@ class SessionMetaAttributes {
      */
     private Map<String, Object> getCache() {
         Map<String, Object> cacheItem =
-                AtomicMapLookup.getAtomicMap(cache, cacheId);
+                AtomicMapLookup.getFineGrainedAtomicMap(cache, cacheId);
 
         return cacheItem;
     }
