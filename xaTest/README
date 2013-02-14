@@ -1,0 +1,8 @@
+
+Goal of this sub project
+
+1. test xa transactions in jbossAS, tomcat, tommee
+* nested transactions
+* how local transactions could affect XA transaction
+2. use Oracle UCP in XA transactions
+3. test oracle db and infinispan in XA transaction
