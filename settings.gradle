@@ -1,6 +1,4 @@
-include "bitronixInfinispanIntegration"
 include "tomcatDistributedSessionManager"
-include "ispnSM"
 include "memoryAgent"
 include "tomcatJBossTM"
 include "testLB"
