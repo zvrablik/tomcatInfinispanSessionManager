@@ -1,7 +1,7 @@
 /* --------------------------------------------------------------*\
 | Copyright (C) e-Spatial Solutions Limited, All rights reserved. |
 \* --------------------------------------------------------------*/
-package org.vrablik.testlb;
+package org.vrablik.xatest;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.DefaultCacheManager;
@@ -20,7 +20,7 @@ public class CacheObj {
 
     private Cache<String, String> cache;
 
-    public CacheObj( Cache<String, String> cache){
+    public CacheObj(Cache<String, String> cache){
         this.cache = cache;
     }
 
@@ -29,15 +29,10 @@ public class CacheObj {
      *
      * @param key
      * @param value
-     * @param throwException
      *
      */
-    public void set( String key, String value, boolean throwException){
+    public void set( String key, String value){
       cache.put(key, value);        
-        
-      if ( throwException ){
-          throw new RuntimeException("forced throw runtime exception");
-      }
     }
 
     /**
@@ -57,10 +52,10 @@ public class CacheObj {
      */
     public static CacheObj createCache( String cacheName ) throws Exception {
         ClassLoader webappClassLoader = Thread.currentThread().getContextClassLoader();
-        System.out.println("testLB " + webappClassLoader);
-        System.out.println("testLB " + webappClassLoader.getParent());
+        //System.out.println("xaTest " + webappClassLoader);
+        //System.out.println("xaTest " + webappClassLoader.getParent());
 
-        InputStream configStream = CacheObj.class.getResourceAsStream("testLBApp.xml");
+        InputStream configStream = CacheObj.class.getResourceAsStream("testXAApp.xml");
         manager = new DefaultCacheManager( configStream );
         Cache cache =  manager.getCache(cacheName);
         return new CacheObj( cache );

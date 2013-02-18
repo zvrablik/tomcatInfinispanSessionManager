@@ -1,5 +1,11 @@
-package org.vrablik.testlb;
+/* --------------------------------------------------------------*\
+| Copyright (C) e-Spatial Solutions Limited, All rights reserved. |
+\* --------------------------------------------------------------*/
+package org.vrablik.xatest;
 
+import org.vrablik.test.database.DbContent;
+import org.vrablik.test.database.DbRow;
+import org.vrablik.test.database.DbTable;
 import org.vrablik.test.database.TestDbOracle;
 import org.vrablik.test.infinispan.TestCacheObj;
 
@@ -16,6 +22,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
@@ -25,14 +32,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-
 /**
  * Session content with requests log
  * @author zhenek
  *
  */
-public class TransactionalSessionServlet extends HttpServlet {
-  public static final String REQUEST_LOG_NAME = "requestLog";
+public class XATestServlet extends HttpServlet {
+    public static final String REQUEST_LOG_NAME = "requestLog";
 
     /**
      * session key of attribute names
@@ -42,19 +48,19 @@ public class TransactionalSessionServlet extends HttpServlet {
      * another distributed cache to be used independently on session distributed cache
      */
     public static CacheObj cache;
-    
+
     public static TestDbOracle dbOracle;
 
     static {
         try {
             cache = CacheObj.createCache("testLBAppCache1");
         } catch (Exception e) {
-            e.printStackTrace();  
+            e.printStackTrace();
             cache = null;
         }
-        
+
         try{
-          dbOracle = new TestDbOracle();
+            dbOracle = new TestDbOracle();
         } catch (Exception e) {
             e.printStackTrace();
             dbOracle = null;
@@ -66,17 +72,17 @@ public class TransactionalSessionServlet extends HttpServlet {
         PrintWriter out = getOutput(res);
         //get session and create if it doesn't exist
         HttpSession session = req.getSession();
-        
-        
-        RequestLog oneLog = this.createRequestLog("GetSessionContent", req);
+
+
+        RequestLog oneLog = this.createRequestLog("GetContent", req);
         updateRequestLog(session, oneLog);
-        
+
         Enumeration<String> attributeNames = session.getAttributeNames();
-        
+
         out.print("<html>");
         out.print("<body>");
         out.print("<a href=\"index.jsp\"> Back </a><br/><br/>");
-        
+
         String metaAttributes = this.getSessionMetaAttributes(req.getSession());
         out.println("<h3>Session meta attributes:</h3>");
         out.println(metaAttributes);
@@ -85,14 +91,14 @@ public class TransactionalSessionServlet extends HttpServlet {
         out.println("<h3>Session attributes:</h3>");
         out.println("<br/>");
         while ( attributeNames.hasMoreElements()){
-          String key = attributeNames.nextElement();
-          if ( !REQUEST_LOG_NAME.equals(key)){
-            renderOneItem(out, session.getAttribute(key), key);
-          }
+            String key = attributeNames.nextElement();
+            if ( !REQUEST_LOG_NAME.equals(key)){
+                renderOneItem(out, session.getAttribute(key), key);
+            }
         }
-        
+
         renderOneItem(out, session.getAttribute(REQUEST_LOG_NAME), REQUEST_LOG_NAME);
-        
+
         // attributes stored in cache created in application
         out.println("<br/>");
         out.println("<h3>Application attributes:</h3>");
@@ -117,14 +123,36 @@ public class TransactionalSessionServlet extends HttpServlet {
                 renderOneItem(out, attrValue, attrName);
             }
         }
-                
+
+        try {
+            DbContent dbContent = dbOracle.getDbContent();
+            List<DbTable> tables = dbContent.getTables();
+
+            for ( DbTable table : tables ){
+                out.println("<h3>");
+                out.println(table.getTableName() + " , " + table.getColumnNames());
+                out.println("</h3>");
+
+
+                List<DbRow> rows = table.getRows();
+                for( DbRow row : rows){
+                    out.println("<pre>");
+                    out.println(row);
+                    out.println("</pre>");
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
         out.print("</body>");
         out.print("</html>");
-        
+
         out.flush();
         out.close();
     }
-    
+
     /**
      * Session meta attributes
      * @param session
@@ -132,67 +160,50 @@ public class TransactionalSessionServlet extends HttpServlet {
      */
     private String getSessionMetaAttributes(HttpSession session) {
         Map<String, String> metaAttributes = new HashMap<String, String>();
-        
+
         metaAttributes.put( "sessionId", session.getId());
         metaAttributes.put( "cration time", String.valueOf( new Date( session.getCreationTime() ) ) );
         metaAttributes.put( "last accessed time", String.valueOf(  new Date( session.getLastAccessedTime() ) ) );
         metaAttributes.put( "max inactive interval", String.valueOf( session.getMaxInactiveInterval() ) );
-        metaAttributes.put( "last access before (miliseconds)", String.valueOf( 
+        metaAttributes.put( "last access before (miliseconds)", String.valueOf(
                 System.currentTimeMillis() - session.getLastAccessedTime() ) );
-        
+
         StringBuilder s = new StringBuilder(200);
-        
+
         for (Map.Entry<String, String> item : metaAttributes.entrySet() ) {
             s.append( item.getKey() ).append(" : ").append(item.getValue() ).append("<br/>");
         }
-        
+
         return s.toString();
     }
 
     private void renderOneItem(PrintWriter out, Object value,
-        String key) {
-       out.print("key: " + key + " value: " + value );
-       out.print("<br/>");
+                               String key) {
+        out.print("key: " + key + " value: " + value );
+        out.print("<br/>");
     }
-    
+
     public void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String action = request.getParameter("action");
         String message = "Action " + action + " finished successfully";
 
-        HttpSession session = request.getSession();
         boolean updateLog = true;
-        if ("addToSession".equals(action)) {
-            String key = request.getParameter("key");
-            String value = request.getParameter("value");
+        HttpSession session = request.getSession();
 
-            session.setAttribute(key, value);
-            message += " Key " + key + " added to session. Value: " + value;
-        } else if ("removeFromSession".equals(action)) {
-            String key = request.getParameter("key");
-            session.removeAttribute(key);
-            message += " Key " + key + "removed from session.";
-        } else if ("invalidateSession".equals(action)) {
-            session.invalidate();
-            message += " Session has been invalidated.";
-            updateLog = false;
-        } else if ("setSessionMII".equals(action)) {
-            //in seconds
-            String mii = request.getParameter("mii");
-            session.setMaxInactiveInterval( Integer.valueOf( mii ) );
-            message += " Max inactive interval set to (seconds): " + mii;
-        } else if ("setCacheValueOK".equals(action)) {
-            boolean throwException = false;
-            setCacheValue(request, session, throwException);
-        } else if ("setCacheValueERR".equals(action)) {
-            boolean throwException = true;
-            setCacheValue(request, session, throwException);
-        } else if ("getCacheValue".equals(action)) {
-            String key = request.getParameter("key");
-            String value = cache.getStoredData().get(key);
-            message += " key: " + key + " value: " + value;
-        } else {
-            message = "Action is not recognized";
+        try{
+            if ("setCacheValueOK".equals(action)) {
+                boolean throwException = false;
+                setCacheValue(request, session, throwException);
+            } else if ("setCacheValueERR".equals(action)) {
+                boolean throwException = true;
+                setCacheValue(request, session, throwException);
+            } else {
+                message = "Action is not recognized";
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+            message = "Action " + action + " failed with message " + e.getMessage();
         }
 
         if (updateLog) {
@@ -253,63 +264,68 @@ public class TransactionalSessionServlet extends HttpServlet {
             //test begin transaction here
             //transaction.begin();
 
-            dbOracle.set(key, value, false);
-            cache.set(key, value, false);
-            TestCacheObj.cache.set(key, "TestCacheObj" + value, throwException);
+            dbOracle.set(key, value);
+            cache.set(key, value);
+            TestCacheObj.cache.set(key, "TestCacheObj" + value);
+
+            if ( throwException ){
+                throw new RuntimeException("forced throw runtime exception");
+            }
 
             transaction.commit();
+            System.out.println("Transaction committed.");
         } catch (Exception e) {
             try {
                 transaction.rollback();
             } catch (SystemException e1) {
-                throw new RuntimeException( e );
+                System.out.println(e1.getMessage());
             }
             throw new RuntimeException( e );
         }
     }
 
-    private RequestLog createRequestLog(String action, HttpServletRequest request) throws UnknownHostException{
-      InetAddress addr = InetAddress.getLocalHost();
-      String localName = addr.getHostName();
-      String ipAddr = addr.getHostAddress();
-     
-      
-      String remoteHost = request.getRemoteHost();
-      String remoteAddr = request.getRemoteAddr();
-      
-      RequestLog oneLog = new RequestLog(localName, ipAddr, remoteHost, remoteAddr, new Date(), action);
-      
-      return oneLog;
+    private RequestLog createRequestLog(String action, HttpServletRequest request) throws UnknownHostException {
+        InetAddress addr = InetAddress.getLocalHost();
+        String localName = addr.getHostName();
+        String ipAddr = addr.getHostAddress();
+
+
+        String remoteHost = request.getRemoteHost();
+        String remoteAddr = request.getRemoteAddr();
+
+        RequestLog oneLog = new RequestLog(localName, ipAddr, remoteHost, remoteAddr, new Date(), action);
+
+        return oneLog;
     }
-    
+
 
     private void updateRequestLog(HttpSession session, RequestLog oneLog) {
-      List<RequestLog> logs = (List<RequestLog>)session.getAttribute(REQUEST_LOG_NAME);
+        List<RequestLog> logs = (List<RequestLog>)session.getAttribute(REQUEST_LOG_NAME);
 
-      if ( logs == null ){
-        logs = new ArrayList<RequestLog>();
-        logs.add(oneLog);
-      } else {
-        //newes log is first
-        List<RequestLog>newLogs = new ArrayList<RequestLog>(logs.size()+1);
-        newLogs.add(oneLog);
-        newLogs.addAll(logs);
-        logs = newLogs;
-      }
+        if ( logs == null ){
+            logs = new ArrayList<RequestLog>();
+            logs.add(oneLog);
+        } else {
+            //newes log is first
+            List<RequestLog>newLogs = new ArrayList<RequestLog>(logs.size()+1);
+            newLogs.add(oneLog);
+            newLogs.addAll(logs);
+            logs = newLogs;
+        }
 
-      session.setAttribute(REQUEST_LOG_NAME, logs);
+        session.setAttribute(REQUEST_LOG_NAME, logs);
     }
-    
+
 
     private PrintWriter getOutput(HttpServletResponse res) throws IOException {
-      res.setCharacterEncoding("UTF8");
-      res.setContentType("text/html");
-      PrintWriter out = res.getWriter();
-      return out;
+        res.setCharacterEncoding("UTF8");
+        res.setContentType("text/html");
+        PrintWriter out = res.getWriter();
+        return out;
     }
-    
+
     private UserTransaction getTransaction() throws NamingException {
-        
+
         InitialContext ctx = null;
         UserTransaction tt;
         try{
@@ -322,7 +338,7 @@ public class TransactionalSessionServlet extends HttpServlet {
                 ctx.close();
             }
         }
-        
+
         return tt;
     }
 }

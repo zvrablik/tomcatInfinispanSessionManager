@@ -87,7 +87,7 @@ public class InfinispanSessionManagerMultipleInstancesTest  {
         managerOne.add(session);
         tm.commit();
 
-        TransactionManager tm2 = managerOne.getTransactionManager();
+        TransactionManager tm2 = managerThree.getTransactionManager();
         tm2.begin();
         Session sessionFromManager = managerThree.findSession(session.getId());
         assertNotNull(sessionFromManager);

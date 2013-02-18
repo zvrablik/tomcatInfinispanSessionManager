@@ -41,16 +41,10 @@ public class TestCacheObj {
      *
      * @param key
      * @param value
-     * @param throwException
      *
-     * @throws RuntimeException throw if parameter throwException is true
      */
-    public void set( String key, String value, boolean throwException){
+    public void set( String key, String value){
       c.put(key, value);
-        
-      if ( throwException ){
-          throw new RuntimeException("forced throw runtime exception");
-      }
     }
 
     /**
@@ -83,8 +77,8 @@ public class TestCacheObj {
         InputStream configStream = TestCacheObj.class.getResourceAsStream("testInfinispanCache.xml");
 
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        System.out.println("testInfinispanCache" + cl);
-        System.out.println("testInfinispanCache" + cl.getParent());
+//        System.out.println("testInfinispanCache" + cl);
+//        System.out.println("testInfinispanCache" + cl.getParent());
 
         //current classloader is web app classloader
         Thread.currentThread().setContextClassLoader(cl.getParent());

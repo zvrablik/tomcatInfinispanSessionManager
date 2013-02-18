@@ -1,4 +1,3 @@
-
 Goal of this sub project
 
 1. test xa transactions in jbossAS, tomcat, tommee
@@ -6,3 +5,25 @@ Goal of this sub project
 * how local transactions could affect XA transaction
 2. use Oracle UCP in XA transactions
 3. test oracle db and infinispan in XA transaction
+
+
+setup TOMCAT example
+====================
+
+steps:
+1. create MY_TEST tablespace
+2. run script setup_db_schema.sql as db system user
+3. get tomcat from git repository
+4. setup tomcat
+4.1 set the db connections in conf/server.xml (not the context.xml!)
+4.1.1 url ip address
+4.1.2 user name and password if different schemas used
+4.2 set correct JAVA_HOME path and CATALINA_HOME in start.sh
+
+
+setup TOMEE
+===========
+
+
+setup JBOSSAS7
+==============

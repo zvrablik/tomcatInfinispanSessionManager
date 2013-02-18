@@ -16,6 +16,19 @@ subprojects {
         mavenCentral()
     }
 
+    jar {
+        manifest {
+            attributes(
+                    "Implementation-Title": project.description ?: project.name,
+                    "Implementation-Version": version,
+                    'Built-By': System.getProperty('user.name'),
+                    'Built-Date': new Date(),
+                    'Built-JDK': System.getProperty('java.version')
+            )
+        }
+    }
+
+
     jar.enabled = true
 	
     infinispanVersion = '5.1.5.FINAL'
